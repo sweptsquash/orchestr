@@ -8,8 +8,9 @@
 import { DatabaseManager } from '../DatabaseManager';
 import { Connection } from '../Connection';
 import { EnsembleBuilder } from './EnsembleBuilder';
+import { HasRelationshipsMixin } from './Concerns/HasRelationships';
 
-export abstract class Ensemble {
+export abstract class Ensemble extends HasRelationshipsMixin {
   /**
    * The connection resolver instance
    */
@@ -114,6 +115,7 @@ export abstract class Ensemble {
    * Create a new Eloquent model instance
    */
   constructor(attributes: Record<string, any> = {}) {
+    super();
     this.fill(attributes);
   }
 
@@ -259,6 +261,17 @@ export abstract class Ensemble {
     // Add appended accessors
     for (const key of this.appends) {
       attributes[key] = this.getAttribute(key);
+    }
+
+    // Add loaded relationships
+    for (const [key, value] of Object.entries(this.relations)) {
+      if (Array.isArray(value)) {
+        attributes[key] = value.map((model) => model.toObject());
+      } else if (value && typeof value.toObject === 'function') {
+        attributes[key] = value.toObject();
+      } else {
+        attributes[key] = value;
+      }
     }
 
     return attributes;
@@ -629,5 +642,41 @@ export abstract class Ensemble {
       return value + 'es';
     }
     return value + 's';
+  }
+
+  /**
+   * Create a new query instance for the model
+   */
+  newQuery(): EnsembleBuilder<any> {
+    return (this.constructor as any).query();
+  }
+
+  /**
+   * Create a new instance of the given model
+   */
+  newInstance(attributes: Record<string, any> = {}, exists: boolean = false): this {
+    const ModelClass = this.constructor as new (attributes: Record<string, any>) => this;
+    const instance = new ModelClass(attributes);
+    instance.exists = exists;
+
+    if (exists) {
+      instance.syncOriginal();
+    }
+
+    return instance;
+  }
+
+  /**
+   * Get the name of the "updated at" column
+   */
+  getUpdatedAtColumn(): string | null {
+    return this.timestamps ? (this.constructor as typeof Ensemble).UPDATED_AT : null;
+  }
+
+  /**
+   * Get the name of the "created at" column
+   */
+  getCreatedAtColumn(): string | null {
+    return this.timestamps ? (this.constructor as typeof Ensemble).CREATED_AT : null;
   }
 }

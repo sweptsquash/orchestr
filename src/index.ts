@@ -48,10 +48,17 @@ export { EnsembleBuilder } from './Database/Ensemble/EnsembleBuilder';
 export { EnsembleCollection } from './Database/Ensemble/EnsembleCollection';
 export { softDeletes } from './Database/Ensemble/SoftDeletes';
 
+// Ensemble Relations
+export { Relation, HasOne, HasMany, BelongsTo } from './Database/Ensemble/Relations';
+
+// Ensemble Concerns
+export { HasRelationshipsMixin } from './Database/Ensemble/Concerns/HasRelationships';
+
 // Ensemble Types
 export type { HasAttributes, CastType, AttributeMutator, AttributeAccessor } from './Database/Ensemble/Concerns/HasAttributes';
 export type { HasTimestamps } from './Database/Ensemble/Concerns/HasTimestamps';
 export type { SoftDeletes } from './Database/Ensemble/SoftDeletes';
+export type { RelationshipConfig } from './Database/Ensemble/Concerns/HasRelationships';
 
 // Database Types
 export type { DatabaseAdapter, DatabaseConfig, QueryResult } from './Database/Contracts/DatabaseAdapter';

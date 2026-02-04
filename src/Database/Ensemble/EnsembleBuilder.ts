@@ -8,6 +8,7 @@ import { Builder as QueryBuilder } from '../Query/Builder';
 import { DatabaseAdapter } from '../Contracts/DatabaseAdapter';
 import { Ensemble } from './Ensemble';
 import { EnsembleCollection } from './EnsembleCollection';
+import { Relation } from './Relations/Relation';
 
 export class EnsembleBuilder<T extends Ensemble> extends QueryBuilder<T> {
   /**
@@ -18,7 +19,7 @@ export class EnsembleBuilder<T extends Ensemble> extends QueryBuilder<T> {
   /**
    * The relationships that should be eager loaded
    */
-  protected eagerLoad: Record<string, any> = {};
+  protected eagerLoad: Record<string, (query: any) => void> = {};
 
   constructor(adapter: DatabaseAdapter, model: T) {
     super(adapter);
@@ -38,7 +39,13 @@ export class EnsembleBuilder<T extends Ensemble> extends QueryBuilder<T> {
    */
   async get(): Promise<T[]> {
     const results = await super.get();
-    return this.hydrate(results);
+    const models = this.hydrate(results);
+
+    if (Object.keys(this.eagerLoad).length > 0) {
+      await this.eagerLoadRelations(models);
+    }
+
+    return models;
   }
 
   /**
@@ -73,14 +80,134 @@ export class EnsembleBuilder<T extends Ensemble> extends QueryBuilder<T> {
   /**
    * Set the relationships that should be eager loaded
    */
-  with(relations: string | string[]): this {
-    const relationArray = Array.isArray(relations) ? relations : [relations];
-
-    for (const relation of relationArray) {
-      this.eagerLoad[relation] = () => {};
+  with(relations: string | string[] | Record<string, (query: any) => void>): this {
+    if (typeof relations === 'string') {
+      this.eagerLoad[relations] = () => {};
+    } else if (Array.isArray(relations)) {
+      for (const relation of relations) {
+        this.eagerLoad[relation] = () => {};
+      }
+    } else {
+      for (const [relation, callback] of Object.entries(relations)) {
+        this.eagerLoad[relation] = callback;
+      }
     }
 
     return this;
+  }
+
+  /**
+   * Eager load the relationships for the models
+   */
+  protected async eagerLoadRelations(models: T[]): Promise<void> {
+    for (const [name, constraints] of Object.entries(this.eagerLoad)) {
+      if (models.length === 0) {
+        continue;
+      }
+
+      // Parse nested relations (e.g., "posts.comments")
+      const segments = name.split('.');
+
+      if (segments.length > 1) {
+        await this.eagerLoadNestedRelations(models, name, constraints);
+      } else {
+        await this.eagerLoadRelation(models, name, constraints);
+      }
+    }
+  }
+
+  /**
+   * Eagerly load the relationship on a set of models
+   */
+  protected async eagerLoadRelation(
+    models: T[],
+    name: string,
+    constraints: (query: any) => void
+  ): Promise<void> {
+    // Get the relation instance from the first model
+    const relation = this.getRelation(models[0], name);
+
+    // Set the eager constraints
+    relation.addEagerConstraints(models);
+
+    // Apply any additional constraints
+    constraints(relation);
+
+    // Initialize the relation on all models
+    relation.initRelation(models, name);
+
+    // Get the eager results
+    const results = await relation.getEager();
+
+    // Match the results back to their parent models
+    relation.match(models, new EnsembleCollection(results), name);
+  }
+
+  /**
+   * Eagerly load nested relationships
+   */
+  protected async eagerLoadNestedRelations(
+    models: T[],
+    name: string,
+    constraints: (query: any) => void
+  ): Promise<void> {
+    const segments = name.split('.');
+    const firstSegment = segments[0];
+    const remainingSegments = segments.slice(1).join('.');
+
+    // Load the first level relationship
+    await this.eagerLoadRelation(models, firstSegment, () => {});
+
+    // Get all the loaded models from the first relationship
+    const relatedModels: Ensemble[] = [];
+    for (const model of models) {
+      const related = model.getRelation(firstSegment);
+      if (related) {
+        if (Array.isArray(related)) {
+          relatedModels.push(...related);
+        } else if (related instanceof EnsembleCollection) {
+          relatedModels.push(...related);
+        } else {
+          relatedModels.push(related);
+        }
+      }
+    }
+
+    // Recursively load the nested relationships
+    if (relatedModels.length > 0 && relatedModels[0]) {
+      const nestedBuilder = relatedModels[0].newQuery();
+      nestedBuilder.eagerLoad[remainingSegments] = constraints;
+      await nestedBuilder.eagerLoadRelations(relatedModels as any[]);
+    }
+  }
+
+  /**
+   * Get the relation instance for the given relation name
+   */
+  protected getRelation(model: T, name: string): Relation<any, any> {
+    const relationMethod = (model as any)[name];
+
+    if (typeof relationMethod !== 'function') {
+      throw new Error(
+        `Call to undefined relationship [${name}] on model [${model.constructor.name}]`
+      );
+    }
+
+    const relation = relationMethod.call(model);
+
+    if (!(relation instanceof Relation)) {
+      throw new Error(
+        `Relationship method [${name}] must return a Relation instance`
+      );
+    }
+
+    // Disable default constraints for eager loading
+    const originalConstraints = Relation['constraints'];
+    Relation['constraints'] = false;
+    const freshRelation = relationMethod.call(model);
+    Relation['constraints'] = originalConstraints;
+
+    return freshRelation;
   }
 
   /**

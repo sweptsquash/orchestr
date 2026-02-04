@@ -14,7 +14,7 @@ Built from the ground up with Laravel's core components:
 - **Controllers** - MVC architecture support
 - **Facades** - Static proxy access to services (Route, DB)
 - **Query Builder** - Fluent database query builder with full Laravel API
-- **Ensemble ORM** - ActiveRecord ORM (Laravel's Eloquent equivalent) with relationships, soft deletes, and more
+- **Ensemble ORM** - ActiveRecord ORM (Laravel's Eloquent equivalent) with relationships (HasOne, HasMany, BelongsTo), eager/lazy loading, soft deletes, and more
 - **Database Manager** - Multi-connection database management
 - **Application Lifecycle** - Complete Laravel bootstrap process
 
@@ -25,11 +25,6 @@ npm install @orchestr-sh/orchestr reflect-metadata
 ```
 
 **Note**: `reflect-metadata` is required for dependency injection to work.
-
-## Documentation
-
-- **[Dependency Injection Guide](./DEPENDENCY_INJECTION.md)** - Complete guide to using DI with troubleshooting
-- **[DI Example](./examples/dependency-injection/)** - Working example with services and controllers
 
 ## Quick Start
 
@@ -454,9 +449,9 @@ await DB.table('users')
 ActiveRecord ORM (Eloquent equivalent) with relationships and advanced features:
 
 ```typescript
-import { Ensemble, EnsembleBuilder } from 'orchestr';
+import { Ensemble, HasOne, HasMany, BelongsTo, softDeletes } from 'orchestr';
 
-// Define a model
+// Define models with relationships
 class User extends Ensemble {
   protected table = 'users';
   protected fillable = ['name', 'email', 'password'];
@@ -465,11 +460,72 @@ class User extends Ensemble {
     email_verified_at: 'datetime',
     is_admin: 'boolean'
   };
+
+  // One-to-One: User has one profile
+  profile(): HasOne<Profile, User> {
+    return this.hasOne(Profile);
+  }
+
+  // One-to-Many: User has many posts
+  posts(): HasMany<Post, User> {
+    return this.hasMany(Post);
+  }
+}
+
+class Profile extends Ensemble {
+  protected table = 'profiles';
+
+  // Belongs To: Profile belongs to user
+  user(): BelongsTo<User, Profile> {
+    return this.belongsTo(User);
+  }
+}
+
+class Post extends Ensemble {
+  protected table = 'posts';
+
+  // Belongs To: Post belongs to author (user)
+  author(): BelongsTo<User, Post> {
+    return this.belongsTo(User, 'user_id');
+  }
+
+  // One-to-Many: Post has many comments
+  comments(): HasMany<Comment, Post> {
+    return this.hasMany(Comment);
+  }
 }
 
 // Query using the model
 const users = await User.query().where('active', true).get();
 const user = await User.query().find(1);
+
+// Lazy loading relationships
+await user.load('posts');
+await user.load(['posts', 'profile']);
+const posts = user.getRelation('posts');
+
+// Eager loading (solves N+1 problem)
+const users = await User.query()
+  .with(['posts.comments', 'profile'])
+  .get();
+
+// Eager load with constraints
+const users = await User.query()
+  .with({
+    posts: (query) => query.where('published', '=', true)
+  })
+  .get();
+
+// Create related models
+const post = await user.posts().create({
+  title: 'My Post',
+  content: 'Content here'
+});
+
+// Associate/dissociate (BelongsTo)
+const post = new Post();
+post.author().associate(user);
+await post.save();
 
 // Create
 const user = new User();
@@ -491,37 +547,29 @@ await user.save();
 // Delete
 await user.delete();
 
-// Mass assignment
-await User.query().create({
-  name: 'John',
-  email: 'john@example.com'
-});
-
 // Soft deletes
-import { softDeletes } from 'orchestr';
-
-class Post extends softDeletes(Ensemble) {
-  protected table = 'posts';
+class Article extends softDeletes(Ensemble) {
+  protected table = 'articles';
 }
 
-const post = await Post.query().find(1);
-await post.delete(); // Soft delete
-await post.restore(); // Restore
-await post.forceDelete(); // Permanent delete
+const article = await Article.query().find(1);
+await article.delete(); // Soft delete
+await article.restore(); // Restore
+await article.forceDelete(); // Permanent delete
 
 // Query only non-deleted
-const posts = await Post.query().get();
+const articles = await Article.query().get();
 
 // Query with trashed
-const allPosts = await Post.query().withTrashed().get();
+const allArticles = await Article.query().withTrashed().get();
 
 // Query only trashed
-const trashedPosts = await Post.query().onlyTrashed().get();
+const trashedArticles = await Article.query().onlyTrashed().get();
 
 // Timestamps
 // Automatically manages created_at and updated_at
-class Article extends Ensemble {
-  protected table = 'articles';
+class Post extends Ensemble {
+  protected table = 'posts';
   public timestamps = true; // enabled by default
 }
 
@@ -549,6 +597,8 @@ const user = await User.query().find(1);
 console.log(user.full_name); // Uses accessor
 user.password = 'secret123'; // Uses mutator
 ```
+
+**See [RELATIONSHIPS.md](./RELATIONSHIPS.md) for complete relationship documentation.**
 
 ### Database Setup
 
@@ -621,7 +671,8 @@ kernel.listen(3000);
 
 **app/Models/User.ts**
 ```typescript
-import { Ensemble, softDeletes } from 'orchestr';
+import { Ensemble, HasMany, softDeletes } from 'orchestr';
+import { Post } from './Post';
 
 export class User extends softDeletes(Ensemble) {
   protected table = 'users';
@@ -632,6 +683,26 @@ export class User extends softDeletes(Ensemble) {
     email_verified_at: 'datetime',
     is_admin: 'boolean'
   };
+
+  // Define relationship
+  posts(): HasMany<Post, User> {
+    return this.hasMany(Post);
+  }
+}
+```
+
+**app/Models/Post.ts**
+```typescript
+import { Ensemble, BelongsTo } from 'orchestr';
+import { User } from './User';
+
+export class Post extends Ensemble {
+  protected table = 'posts';
+  protected fillable = ['user_id', 'title', 'content', 'published_at'];
+
+  author(): BelongsTo<User, Post> {
+    return this.belongsTo(User, 'user_id');
+  }
 }
 ```
 
@@ -651,15 +722,17 @@ Route.group({ prefix: 'api' }, () => {
     return res.json({ users });
   });
 
-  // Using Ensemble ORM
+  // Using Ensemble ORM with eager loading
   Route.get('/users/:id', async (req, res) => {
-    const user = await User.query().find(req.routeParam('id'));
+    const user = await User.query()
+      .with('posts')
+      .find(req.routeParam('id'));
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    return res.json({ user });
+    return res.json({ user: user.toObject() });
   });
 
   Route.post('/users', async (req, res) => {
@@ -709,9 +782,15 @@ src/
 │   │   ├── EnsembleBuilder.ts    # Model query builder
 │   │   ├── EnsembleCollection.ts # Model collection
 │   │   ├── SoftDeletes.ts        # Soft delete trait
+│   │   ├── Relations/
+│   │   │   ├── Relation.ts       # Base relation class
+│   │   │   ├── HasOne.ts         # One-to-one relationship
+│   │   │   ├── HasMany.ts        # One-to-many relationship
+│   │   │   └── BelongsTo.ts      # Inverse relationship
 │   │   └── Concerns/
 │   │       ├── HasAttributes.ts  # Attribute handling & casting
-│   │       └── HasTimestamps.ts  # Timestamp management
+│   │       ├── HasTimestamps.ts  # Timestamp management
+│   │       └── HasRelationships.ts # Relationship functionality
 │   ├── Adapters/
 │   │   └── DrizzleAdapter.ts     # Drizzle ORM adapter
 │   └── DatabaseServiceProvider.ts
@@ -751,7 +830,11 @@ Core components completed and in progress:
 - [x] Multi-connection Database Manager
 - [x] Soft Deletes
 - [x] Model Attributes & Casting
-- [ ] Model Relationships (HasMany, BelongsTo, etc.)
+- [x] Model Relationships (HasOne, HasMany, BelongsTo)
+- [x] Eager/Lazy Loading
+- [ ] Many-to-Many Relationships (BelongsToMany)
+- [ ] Relationship Queries (has, whereHas, withCount)
+- [ ] Polymorphic Relationships
 - [ ] Database Migrations
 - [ ] Database Seeding
 - [ ] Validation System
@@ -781,7 +864,10 @@ Core components completed and in progress:
 | Soft Deletes | ✅ | ✅        |
 | Timestamps | ✅ | ✅        |
 | Attribute Casting | ✅ | ✅        |
-| Model Relationships | ✅ | 🚧       |
+| Basic Relationships | ✅ | ✅        |
+| Eager/Lazy Loading | ✅ | ✅        |
+| Many-to-Many | ✅ | 🚧       |
+| Polymorphic Relations | ✅ | 🚧       |
 | Migrations | ✅ | 🚧       |
 | Seeding | ✅ | 🚧       |
 | Validation | ✅ | 🚧       |
