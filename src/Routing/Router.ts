@@ -2,6 +2,8 @@ import { Application } from '../Foundation/Application';
 import { Route, HttpMethod, RouteAction, Middleware } from './Route';
 import { Request } from './Request';
 import { Response } from './Response';
+import { FormRequest } from '../Foundation/Http/FormRequest';
+import { ValidationException } from '../Foundation/Http/ValidationException';
 
 /**
  * Route group attributes
@@ -265,8 +267,67 @@ export class Router {
       );
     }
 
-    // Call the controller method
+    // Check if the method expects a FormRequest as first parameter
+    const paramTypes = Reflect.getMetadata('design:paramtypes', ControllerClass.prototype, methodName);
+
+    if (paramTypes && paramTypes.length > 0) {
+      const firstParamType = paramTypes[0];
+
+      // Check if first parameter is a FormRequest subclass
+      if (this.isFormRequestClass(firstParamType)) {
+        try {
+          // Create an instance of the FormRequest and validate it
+          // Use 'any' to bypass abstract class check - we know it's a concrete subclass at runtime
+          const formRequestInstance = new (firstParamType as any)(req);
+          await formRequestInstance.validate();
+
+          // Call the controller method with the validated FormRequest
+          return await (controller as any)[methodName](formRequestInstance, res);
+        } catch (error) {
+          // If validation failed, send error response
+          if (error instanceof ValidationException) {
+            res.status(422).json({
+              message: 'The given data was invalid.',
+              errors: error.errors()
+            });
+            return;
+          }
+
+          // If authorization failed, send error response
+          if (error instanceof Error && error.message === 'This action is unauthorized.') {
+            res.status(403).json({
+              message: 'This action is unauthorized.'
+            });
+            return;
+          }
+
+          throw error;
+        }
+      }
+    }
+
+    // Call the controller method with regular Request
     return await (controller as any)[methodName](req, res);
+  }
+
+  /**
+   * Check if a class is a FormRequest subclass
+   */
+  private isFormRequestClass(cls: any): cls is typeof FormRequest {
+    if (!cls || typeof cls !== 'function') {
+      return false;
+    }
+
+    // Check if it's FormRequest itself or extends FormRequest
+    let current = cls;
+    while (current) {
+      if (current === FormRequest) {
+        return true;
+      }
+      current = Object.getPrototypeOf(current);
+    }
+
+    return false;
   }
 
   /**
