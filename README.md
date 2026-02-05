@@ -254,7 +254,7 @@ Route.get('/profile', handler).addMiddleware(authMiddleware);
 Laravel-style FormRequest for clean validation and authorization:
 
 ```typescript
-import { FormRequest, ValidationRules, ValidationException, Route, Request, Response } from 'orchestr';
+import { FormRequest, ValidationRules, ValidationException, ValidateRequest, Route, Request, Response } from 'orchestr';
 
 // Create a FormRequest class
 export class StoreUserRequest extends FormRequest {
@@ -284,28 +284,34 @@ export class StoreUserRequest extends FormRequest {
   }
 }
 
-// Use in routes
+// Use in controllers with auto-validation
+@Injectable()
+class UserController extends Controller {
+  @ValidateRequest()  // Enables automatic validation
+  async store(request: StoreUserRequest, res: Response) {
+    // Request is already validated! Get safe data
+    const validated = request.validated();
+
+    const user = await User.create(validated);
+    return res.status(201).json({ user });
+  }
+}
+
+Route.post('/users', [UserController, 'store']);
+
+// Or use manually in routes
 Route.post('/users', async (req: Request, res: Response) => {
   try {
-    // Validate request (checks authorization AND validation)
     const formRequest = await StoreUserRequest.validate(StoreUserRequest, req, res);
-
-    // Get validated data only
     const validated = formRequest.validated();
-
-    // Create user with safe, validated data
     const user = await User.create(validated);
-
     return res.status(201).json({ user });
   } catch (error) {
-    // Validation/authorization errors already handled
     if (error instanceof ValidationException) return;
     throw error;
   }
 });
 ```
-
-**See [FORM_REQUESTS.md](./FORM_REQUESTS.md) for complete documentation.**
 
 ### Controllers
 

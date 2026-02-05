@@ -31,6 +31,7 @@ export { loadRoutes, base_path, routes_path } from './Support/helpers';
 
 // Decorators
 export { Injectable } from './Support/Injectable';
+export { ValidateRequest } from './Support/ValidateRequest';
 
 // Providers
 export { RouteServiceProvider } from './Providers/RouteServiceProvider';
