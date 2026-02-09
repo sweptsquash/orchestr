@@ -47,11 +47,16 @@ export class BelongsTo<TRelated extends Ensemble, TParent extends Ensemble> exte
    */
   addConstraints(): void {
     if (Relation['constraints']) {
-      this.query.where(
-        this.ownerKey,
-        '=',
-        this.getForeignKeyValue()
-      );
+      const foreignKeyValue = this.getForeignKeyValue();
+
+      // Only add constraint if foreign key value exists
+      if (foreignKeyValue !== null && foreignKeyValue !== undefined) {
+        this.query.where(
+          this.ownerKey,
+          '=',
+          foreignKeyValue
+        );
+      }
     }
   }
 

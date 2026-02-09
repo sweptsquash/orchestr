@@ -40,11 +40,16 @@ export class HasMany<TRelated extends Ensemble, TParent extends Ensemble> extend
    */
   addConstraints(): void {
     if (Relation['constraints']) {
-      this.query.where(
-        this.foreignKey,
-        '=',
-        this.getParentKey()
-      );
+      const parentKey = this.getParentKey();
+
+      // Only add constraint if parent key exists
+      if (parentKey !== null && parentKey !== undefined) {
+        this.query.where(
+          this.foreignKey,
+          '=',
+          parentKey
+        );
+      }
     }
   }
 

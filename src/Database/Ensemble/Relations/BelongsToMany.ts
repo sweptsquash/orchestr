@@ -133,11 +133,16 @@ export class BelongsToMany<TRelated extends Ensemble, TParent extends Ensemble> 
    * Set the where clause for the relation query
    */
   protected addWhereConstraints(): void {
-    this.query.where(
-      this.getQualifiedForeignPivotKeyName(),
-      '=',
-      this.parent.getAttribute(this.parentKey)
-    );
+    const parentKeyValue = this.parent.getAttribute(this.parentKey);
+
+    // Only add constraint if parent key value exists
+    if (parentKeyValue !== null && parentKeyValue !== undefined) {
+      this.query.where(
+        this.getQualifiedForeignPivotKeyName(),
+        '=',
+        parentKeyValue
+      );
+    }
   }
 
   /**
