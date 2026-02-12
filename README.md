@@ -1,1127 +1,425 @@
 # Orchestr
 
-A 1:1 Laravel replica built in TypeScript. Brings Laravel's elegant syntax and architecture to the TypeScript/Node.js ecosystem.
-
-## Features
-
-Built from the ground up with Laravel's core components:
-
-- **Service Container** - Full IoC container with dependency injection and reflection
-- **Service Providers** - Bootstrap and register services
-- **Configuration** - Dot-notation config repository with runtime access
-- **HTTP Router** - Laravel-style routing with parameter binding and file-based route loading
-- **Request/Response** - Elegant HTTP abstractions
-- **Middleware** - Global and route-level middleware pipeline
-- **Controllers** - MVC architecture support
-- **FormRequest** - Laravel-style validation and authorization
-- **Facades** - Static proxy access to services (Route, DB)
-- **Query Builder** - Fluent database query builder with full Laravel API
-- **Ensemble ORM** - ActiveRecord ORM (Laravel's Eloquent equivalent) with relationships (HasOne, HasMany, BelongsTo, BelongsToMany), eager/lazy loading, soft deletes, and more
-- **Database Manager** - Multi-connection database management
-- **Application Lifecycle** - Complete Laravel bootstrap process
+A Laravel-inspired ORM and framework for TypeScript. Write elegant backend applications with ActiveRecord models (called Ensembles), relationships, query building, and more.
 
 ## Installation
 
 ```bash
-npm install @orchestr-sh/orchestr reflect-metadata
+npm install @orchestr-sh/orchestr reflect-metadata drizzle-orm
+npm install better-sqlite3 # or your preferred database driver
 ```
-
-**Note**: `reflect-metadata` is required for dependency injection to work.
 
 ## Quick Start
 
 ```typescript
-import 'reflect-metadata'; // Must be first!
-import { Application, Kernel, RouteServiceProvider, Route } from 'orchestr';
+import 'reflect-metadata';
+import { Application, Kernel, ConfigServiceProvider, Route } from '@orchestr-sh/orchestr';
 
-// Create application
-const app = new Application(__dirname);
+const app = new Application(process.cwd());
 
-// Register providers
-app.register(RouteServiceProvider);
-await app.boot();
-
-// Create HTTP kernel
-const kernel = new Kernel(app);
-
-// Define routes
-Route.get('/', async (req, res) => {
-  return res.json({ message: 'Hello from Orchestr!' });
-});
-
-Route.get('/users/:id', async (req, res) => {
-  const id = req.routeParam('id');
-  return res.json({ user: { id, name: 'John Doe' } });
-});
-
-Route.post('/users', async (req, res) => {
-  const data = req.only(['name', 'email']);
-  return res.status(201).json({ user: data });
-});
-
-// Start server
-kernel.listen(3000);
-```
-
-## Core Concepts
-
-### Configuration
-
-Orchestr provides a Laravel-style configuration system with dot-notation access:
-
-```typescript
-import { Application, ConfigServiceProvider, Config, config } from 'orchestr';
-
-const app = new Application(__dirname);
-
-// Register configuration
+// Configure database
 app.register(new ConfigServiceProvider(app, {
-  app: {
-    name: 'My Application',
-    env: 'production',
-    debug: false,
-    url: 'http://localhost:3000',
-  },
   database: {
-    default: 'mysql',
+    default: 'sqlite',
     connections: {
-      mysql: {
-        host: 'localhost',
-        port: 3306,
-        database: 'mydb',
-      }
-    }
-  }
+      sqlite: {
+        adapter: 'drizzle',
+        driver: 'sqlite',
+        database: './database.db',
+      },
+    },
+  },
 }));
 
 await app.boot();
 
-// Access via container
-const configInstance = app.make('config');
-const appName = configInstance.get('app.name'); // 'My Application'
-const dbHost = configInstance.get('database.connections.mysql.host'); // 'localhost'
-
-// Access via facade
-const name = Config.get('app.name');
-const debug = Config.get('app.debug', false); // with default
-
-// Access via helper function
-const env = config('app.env');
-const url = config('app.url', 'http://default.com');
-
-// Set configuration values
-Config.set('app.debug', true);
-Config.set({
-  'app.timezone': 'UTC',
-  'app.locale': 'en'
-});
-
-// Check if config exists
-if (Config.has('database.connections.mysql')) {
-  // ...
-}
-
-// Array operations
-Config.push('app.providers', 'NewServiceProvider');
-Config.prepend('app.middleware', 'LoggingMiddleware');
-```
-
-### Service Container
-
-Laravel's IoC container provides powerful dependency injection:
-
-```typescript
-// Bind a service
-app.bind('UserService', () => new UserService());
-
-// Bind a singleton
-app.singleton('Database', () => new Database());
-
-// Resolve from container
-const userService = app.make('UserService');
-```
-
-### Dependency Injection
-
-Orchestr supports automatic constructor-based dependency injection using TypeScript's reflection:
-
-```typescript
-import { Injectable, Controller, Request, Response } from 'orchestr';
-
-// Define a service
-export class UserService {
-  getUsers() {
-    return [{ id: 1, name: 'John' }];
-  }
-}
-
-// Use @Injectable() decorator to enable DI
-@Injectable()
-export class UserController extends Controller {
-  // Dependencies are automatically injected
-  constructor(private userService: UserService) {
-    super();
-  }
-
-  async index(req: Request, res: Response) {
-    const users = this.userService.getUsers();
-    return res.json({ users });
-  }
-}
-
-// Register the service in a provider
-class AppServiceProvider extends ServiceProvider {
-  register(): void {
-    // Bind the service to the container
-    this.app.singleton(UserService, () => new UserService());
-  }
-}
-```
-
-**Important**: The `@Injectable()` decorator is required for dependency injection to work. It triggers TypeScript to emit metadata about constructor parameters.
-
-### Service Providers
-
-Organize service registration and bootstrapping:
-
-```typescript
-class AppServiceProvider extends ServiceProvider {
-  register(): void {
-    this.app.singleton('config', () => ({ /* config */ }));
-  }
-
-  boot(): void {
-    // Bootstrap code
-  }
-}
-
-app.register(AppServiceProvider);
-```
-
-### Routing
-
-Laravel-style routing with full parameter support:
-
-```typescript
-// Simple routes
-Route.get('/users', handler);
-Route.post('/users', handler);
-Route.put('/users/:id', handler);
-Route.delete('/users/:id', handler);
-
-// Route parameters
-Route.get('/users/:id/posts/:postId', async (req, res) => {
-  const userId = req.routeParam('id');
-  const postId = req.routeParam('postId');
-});
-
-// Route groups
-Route.group({ prefix: 'api/v1', middleware: authMiddleware }, () => {
-  Route.get('/profile', handler);
-  Route.post('/posts', handler);
-});
-
-// Named routes
-const route = Route.get('/users', handler);
-route.setName('users.index');
-```
-
-#### Loading Routes from Files
-
-Organize your routes in separate files, just like Laravel:
-
-**routes/web.ts**
-```typescript
-import { Route } from 'orchestr';
-
+// Define routes
 Route.get('/', async (req, res) => {
-  return res.json({ message: 'Welcome' });
+  return res.json({ message: 'Welcome to Orchestr!' });
 });
 
-Route.get('/about', async (req, res) => {
-  return res.json({ page: 'about' });
-});
-```
-
-**routes/api.ts**
-```typescript
-import { Route } from 'orchestr';
-
-Route.group({ prefix: 'api/v1' }, () => {
-  Route.get('/users', async (req, res) => {
-    return res.json({ users: [] });
-  });
-
-  Route.post('/users', async (req, res) => {
-    return res.status(201).json({ created: true });
-  });
-});
-```
-
-**app/Providers/AppRouteServiceProvider.ts**
-```typescript
-import { RouteServiceProvider } from 'orchestr';
-
-export class AppRouteServiceProvider extends RouteServiceProvider {
-  async boot(): Promise<void> {
-    // Load web routes
-    this.routes(() => import('../../routes/web'));
-
-    // Load API routes
-    this.routes(() => import('../../routes/api'));
-
-    await super.boot();
-  }
-}
-```
-
-**index.ts**
-```typescript
-import 'reflect-metadata';
-import { Application, Kernel } from 'orchestr';
-import { AppRouteServiceProvider } from './app/Providers/AppRouteServiceProvider';
-
-const app = new Application(__dirname);
-app.register(AppRouteServiceProvider);
-await app.boot();
-
+// Start server
 const kernel = new Kernel(app);
 kernel.listen(3000);
 ```
 
-### Middleware
+## Models (Ensembles)
 
-Global and route-level middleware:
-
-```typescript
-// Global middleware
-kernel.use(async (req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  await next();
-});
-
-// Route middleware
-const authMiddleware = async (req, res, next) => {
-  if (!req.header('authorization')) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-  await next();
-};
-
-Route.get('/profile', handler).addMiddleware(authMiddleware);
-```
-
-### FormRequest Validation
-
-Laravel-style FormRequest for clean validation and authorization:
+Ensembles are ActiveRecord models with a fluent API for querying and relationships.
 
 ```typescript
-import { FormRequest, ValidationRules, ValidationException, ValidateRequest, Route, Request, Response } from 'orchestr';
+import { Ensemble } from '@orchestr-sh/orchestr';
 
-// Create a FormRequest class
-export class StoreUserRequest extends FormRequest {
-  // Authorize the request
-  protected authorize(): boolean {
-    return this.request.header('authorization') !== undefined;
-  }
-
-  // Define validation rules
-  protected rules(): ValidationRules {
-    return {
-      name: 'required|string|min:3|max:255',
-      email: 'required|email',
-      password: 'required|string|min:8|confirmed',
-      age: 'numeric|min:18|max:120',
-      role: 'required|in:user,admin,moderator',
-    };
-  }
-
-  // Custom error messages
-  protected messages(): Record<string, string> {
-    return {
-      'name.required': 'Please provide your full name.',
-      'email.email': 'Please provide a valid email address.',
-      'password.min': 'Password must be at least 8 characters.',
-    };
-  }
-}
-
-// Use in controllers with auto-validation
-@Injectable()
-class UserController extends Controller {
-  @ValidateRequest()  // Enables automatic validation
-  async store(request: StoreUserRequest, res: Response) {
-    // Request is already validated! Get safe data
-    const validated = request.validated();
-
-    const user = await User.create(validated);
-    return res.status(201).json({ user });
-  }
-}
-
-Route.post('/users', [UserController, 'store']);
-
-// Or use manually in routes
-Route.post('/users', async (req: Request, res: Response) => {
-  try {
-    const formRequest = await StoreUserRequest.validate(StoreUserRequest, req, res);
-    const validated = formRequest.validated();
-    const user = await User.create(validated);
-    return res.status(201).json({ user });
-  } catch (error) {
-    if (error instanceof ValidationException) return;
-    throw error;
-  }
-});
-```
-
-### Controllers
-
-MVC pattern with base controller and dependency injection:
-
-```typescript
-import { Injectable, Controller, Request, Response, Route } from 'orchestr';
-
-// Use @Injectable() when injecting dependencies
-@Injectable()
-class UserController extends Controller {
-  // Services are automatically injected
-  constructor(private userService: UserService) {
-    super();
-  }
-
-  async index(req: Request, res: Response) {
-    const users = await this.userService.getAll();
-    return res.json({ users });
-  }
-
-  async show(req: Request, res: Response) {
-    const id = req.routeParam('id');
-    const user = await this.userService.findById(id);
-    return res.json({ user });
-  }
-
-  async store(req: Request, res: Response) {
-    const validated = await this.validate(req, {
-      name: 'required',
-      email: 'required|email',
-    });
-    const user = await this.userService.create(validated);
-    return res.status(201).json({ user });
-  }
-}
-
-// Register controller routes
-Route.get('/users', [UserController, 'index']);
-Route.get('/users/:id', [UserController, 'show']);
-Route.post('/users', [UserController, 'store']);
-```
-
-**Note**: The `@Injectable()` decorator must be used on any class that needs constructor dependency injection. Without it, TypeScript won't emit the metadata needed for automatic resolution.
-
-### Request
-
-Powerful request helper methods:
-
-```typescript
-// Get input
-req.input('name');
-req.get('email', 'default@example.com');
-
-// Get all inputs
-req.all();
-
-// Get specific inputs
-req.only(['name', 'email']);
-req.except(['password']);
-
-// Check input existence
-req.has('name');
-req.filled('email');
-
-// Route parameters
-req.routeParam('id');
-
-// Headers
-req.header('content-type');
-req.expectsJson();
-req.ajax();
-
-// Request info
-req.method;
-req.path;
-req.ip();
-```
-
-### Response
-
-Fluent response building:
-
-```typescript
-// JSON responses
-res.json({ data: [] });
-res.status(201).json({ created: true });
-
-// Headers
-res.header('X-Custom', 'value');
-res.headers({ 'X-A': 'a', 'X-B': 'b' });
-
-// Cookies
-res.cookie('token', 'value', { httpOnly: true, maxAge: 3600 });
-
-// Redirects
-res.redirect('/home');
-res.redirect('/login', 301);
-
-// Downloads
-res.download(buffer, 'file.pdf');
-
-// Views (simplified)
-res.view('welcome', { name: 'John' });
-```
-
-### Facades
-
-Static access to services:
-
-```typescript
-import { Route, DB } from 'orchestr';
-
-// Route facade provides static access to Router
-Route.get('/path', handler);
-Route.post('/path', handler);
-Route.group({ prefix: 'api' }, () => {
-  // ...
-});
-
-// DB facade provides static access to DatabaseManager
-const users = await DB.table('users').where('active', true).get();
-```
-
-### Database Query Builder
-
-Fluent, chainable query builder with full Laravel API:
-
-```typescript
-import { DB } from 'orchestr';
-
-// Basic queries
-const users = await DB.table('users').get();
-const user = await DB.table('users').where('id', 1).first();
-
-// Where clauses
-await DB.table('users')
-  .where('votes', '>', 100)
-  .where('status', 'active')
-  .get();
-
-// Or where
-await DB.table('users')
-  .where('votes', '>', 100)
-  .orWhere('name', 'John')
-  .get();
-
-// Additional where methods
-await DB.table('users').whereBetween('votes', [1, 100]).get();
-await DB.table('users').whereIn('id', [1, 2, 3]).get();
-await DB.table('users').whereNull('deleted_at').get();
-
-// Ordering, grouping, and limits
-await DB.table('users')
-  .orderBy('name', 'desc')
-  .groupBy('account_id')
-  .having('account_id', '>', 100)
-  .limit(10)
-  .offset(20)
-  .get();
-
-// Joins
-await DB.table('users')
-  .join('contacts', 'users.id', '=', 'contacts.user_id')
-  .leftJoin('orders', 'users.id', '=', 'orders.user_id')
-  .select('users.*', 'contacts.phone', 'orders.price')
-  .get();
-
-// Aggregates
-const count = await DB.table('users').count();
-const max = await DB.table('orders').max('price');
-const min = await DB.table('orders').min('price');
-const avg = await DB.table('orders').avg('price');
-const sum = await DB.table('orders').sum('price');
-
-// Inserts
-await DB.table('users').insert({
-  name: 'John',
-  email: 'john@example.com'
-});
-
-// Updates
-await DB.table('users')
-  .where('id', 1)
-  .update({ votes: 1 });
-
-// Deletes
-await DB.table('users').where('votes', '<', 100).delete();
-
-// Raw expressions
-await DB.table('users')
-  .select(DB.raw('count(*) as user_count, status'))
-  .where('status', '<>', 1)
-  .groupBy('status')
-  .get();
-```
-
-### Ensemble ORM
-
-ActiveRecord ORM (Eloquent equivalent) with relationships and advanced features:
-
-```typescript
-import { Ensemble, HasOne, HasMany, BelongsTo, BelongsToMany, softDeletes } from 'orchestr';
-
-// Define models with relationships
-class User extends Ensemble {
+export class User extends Ensemble {
   protected table = 'users';
   protected fillable = ['name', 'email', 'password'];
   protected hidden = ['password'];
-  protected casts = {
-    email_verified_at: 'datetime',
-    is_admin: 'boolean'
-  };
-
-  // One-to-One: User has one profile
-  profile(): HasOne<Profile, User> {
-    return this.hasOne(Profile);
-  }
-
-  // One-to-Many: User has many posts
-  posts(): HasMany<Post, User> {
-    return this.hasMany(Post);
-  }
-
-  // Many-to-Many: User has many roles
-  roles(): BelongsToMany<Role, User> {
-    return this.belongsToMany(Role, 'role_user')
-      .withPivot('expires_at', 'granted_by')
-      .withTimestamps();
-  }
 }
 
-class Profile extends Ensemble {
-  protected table = 'profiles';
-
-  // Belongs To: Profile belongs to user
-  user(): BelongsTo<User, Profile> {
-    return this.belongsTo(User);
-  }
-}
-
-class Post extends Ensemble {
-  protected table = 'posts';
-
-  // Belongs To: Post belongs to author (user)
-  author(): BelongsTo<User, Post> {
-    return this.belongsTo(User, 'user_id');
-  }
-
-  // One-to-Many: Post has many comments
-  comments(): HasMany<Comment, Post> {
-    return this.hasMany(Comment);
-  }
-
-  // Many-to-Many: Post has many tags
-  tags(): BelongsToMany<Tag, Post> {
-    return this.belongsToMany(Tag);
-  }
-}
-
-class Role extends Ensemble {
-  protected table = 'roles';
-
-  // Many-to-Many: Role has many users (inverse)
-  users(): BelongsToMany<User, Role> {
-    return this.belongsToMany(User, 'role_user', 'role_id', 'user_id');
-  }
-}
-
-// Query using the model
+// Query
 const users = await User.query().where('active', true).get();
-const user = await User.query().find(1);
-
-// Lazy loading relationships
-await user.load('posts');
-await user.load(['posts', 'profile']);
-const posts = user.getRelation('posts');
-
-// Eager loading (solves N+1 problem)
-const users = await User.query()
-  .with(['posts.comments', 'profile'])
-  .get();
-
-// Eager load with constraints
-const users = await User.query()
-  .with({
-    posts: (query) => query.where('published', '=', true)
-  })
-  .get();
-
-// Create related models
-const post = await user.posts().create({
-  title: 'My Post',
-  content: 'Content here'
-});
-
-// Associate/dissociate (BelongsTo)
-const post = new Post();
-post.author().associate(user);
-await post.save();
-
-// Many-to-Many operations
 const user = await User.find(1);
 
-// Attach roles
-await user.roles().attach([1, 2, 3]);
-await user.roles().attach(1, {
-  expires_at: new Date('2025-12-31'),
-  granted_by: 'admin'
-});
-
-// Detach roles
-await user.roles().detach([1, 2]);
-await user.roles().detach(); // detach all
-
-// Sync roles (detach all existing, attach new)
-const changes = await user.roles().sync([1, 2, 3]);
-
-// Toggle roles (attach if not attached, detach if attached)
-await user.roles().toggle([1, 2, 3]);
-
-// Query with pivot constraints
-const activeRoles = await user.roles()
-  .wherePivot('expires_at', '>', new Date())
-  .get();
-
-// Update pivot data
-await user.roles().updateExistingPivot(1, {
-  expires_at: new Date('2027-12-31')
-});
-
 // Create
-const user = new User();
-user.name = 'John Doe';
-user.email = 'john@example.com';
-await user.save();
-
-// Or use create
-const user = await User.query().create({
-  name: 'John Doe',
-  email: 'john@example.com'
-});
+const user = await User.create({ name: 'John', email: 'john@example.com' });
 
 // Update
-const user = await User.query().find(1);
-user.name = 'Jane Doe';
+user.name = 'Jane';
 await user.save();
 
 // Delete
 await user.delete();
-
-// Soft deletes
-class Article extends softDeletes(Ensemble) {
-  protected table = 'articles';
-}
-
-const article = await Article.query().find(1);
-await article.delete(); // Soft delete
-await article.restore(); // Restore
-await article.forceDelete(); // Permanent delete
-
-// Query only non-deleted
-const articles = await Article.query().get();
-
-// Query with trashed
-const allArticles = await Article.query().withTrashed().get();
-
-// Query only trashed
-const trashedArticles = await Article.query().onlyTrashed().get();
-
-// Timestamps
-// Automatically manages created_at and updated_at
-class Post extends Ensemble {
-  protected table = 'posts';
-  public timestamps = true; // enabled by default
-}
-
-// Custom attributes and casts
-class User extends Ensemble {
-  protected casts = {
-    email_verified_at: 'datetime',
-    settings: 'json',
-    is_admin: 'boolean',
-    age: 'number'
-  };
-
-  // Accessors
-  getFullNameAttribute(): string {
-    return `${this.getAttribute('first_name')} ${this.getAttribute('last_name')}`;
-  }
-
-  // Mutators
-  setPasswordAttribute(value: string): void {
-    this.setAttribute('password', hashPassword(value));
-  }
-}
-
-const user = await User.query().find(1);
-console.log(user.full_name); // Uses accessor
-user.password = 'secret123'; // Uses mutator
 ```
 
-#### Many-to-Many Relationships
+## Querying
 
-Orchestr provides full support for many-to-many relationships with pivot table management, exactly like Laravel:
+Fluent query builder with chainable methods.
 
 ```typescript
-class User extends Ensemble {
-  // Define many-to-many relationship
+import { DB } from '@orchestr-sh/orchestr';
+
+// Query builder
+const users = await DB.table('users')
+  .where('votes', '>', 100)
+  .orderBy('created_at', 'desc')
+  .limit(10)
+  .get();
+
+// Using models
+const posts = await Post.query()
+  .where('published', true)
+  .with('author')
+  .get();
+
+// Aggregates
+const count = await Post.query().count();
+const avg = await Post.query().avg('views');
+```
+
+## Relationships
+
+### Standard Relationships
+
+```typescript
+import { Ensemble, HasMany, BelongsTo, DynamicRelation } from '@orchestr-sh/orchestr';
+
+export class User extends Ensemble {
+  protected table = 'users';
+
+  @DynamicRelation
+  posts(): HasMany<Post, User> {
+    return this.hasMany(Post);
+  }
+}
+
+export class Post extends Ensemble {
+  protected table = 'posts';
+
+  @DynamicRelation
+  user(): BelongsTo<User, this> {
+    return this.belongsTo(User);
+  }
+}
+
+// Use relationships
+const user = await User.find(1);
+const posts = await user.posts().get(); // Query builder
+const posts = await user.posts; // Direct access (via @DynamicRelation)
+
+// Eager loading
+const users = await User.query().with('posts').get();
+
+// Nested eager loading
+const posts = await Post.query().with('user.posts').get();
+```
+
+### Many-to-Many
+
+```typescript
+import { Ensemble, BelongsToMany, DynamicRelation } from '@orchestr-sh/orchestr';
+
+export class User extends Ensemble {
+  @DynamicRelation
   roles(): BelongsToMany<Role, User> {
     return this.belongsToMany(Role, 'role_user')
-      .withPivot('expires_at', 'granted_by')  // Additional pivot columns
-      .withTimestamps();                       // Auto-manage timestamps
+      .withPivot('expires_at')
+      .withTimestamps();
+  }
+}
+
+// Attach/Detach
+await user.roles().attach([1, 2, 3]);
+await user.roles().detach([1]);
+
+// Sync (detach all, attach new)
+await user.roles().sync([1, 2, 3]);
+
+// Query pivot
+const activeRoles = await user.roles()
+  .wherePivot('expires_at', '>', new Date())
+  .get();
+```
+
+### Polymorphic Relationships
+
+```typescript
+import { Ensemble, MorphMany, MorphTo, DynamicRelation } from '@orchestr-sh/orchestr';
+
+export class Post extends Ensemble {
+  @DynamicRelation
+  comments(): MorphMany<Comment, Post> {
+    return this.morphMany(Comment, 'commentable');
+  }
+}
+
+export class Video extends Ensemble {
+  @DynamicRelation
+  comments(): MorphMany<Comment, Video> {
+    return this.morphMany(Comment, 'commentable');
+  }
+}
+
+export class Comment extends Ensemble {
+  @DynamicRelation
+  commentable(): MorphTo<Post | Video> {
+    return this.morphTo('commentable');
+  }
+}
+
+// Use polymorphic relations
+const post = await Post.find(1);
+const comments = await post.comments;
+
+const comment = await Comment.find(1);
+const parent = await comment.commentable; // Returns Post or Video
+```
+
+## @DynamicRelation Decorator
+
+The `@DynamicRelation` decorator enables dual-mode access to relationships:
+
+```typescript
+export class User extends Ensemble {
+  @DynamicRelation
+  posts(): HasMany<Post, User> {
+    return this.hasMany(Post);
   }
 }
 
 const user = await User.find(1);
 
-// Attach roles
-await user.roles().attach([1, 2, 3]);
-await user.roles().attach(1, { expires_at: new Date('2025-12-31') });
+// Method syntax (returns query builder)
+const query = user.posts();
+const recentPosts = await query.where('created_at', '>', yesterday).get();
 
-// Detach roles
-await user.roles().detach([1, 2]);
-
-// Sync (detach all, attach new)
-const { attached, detached, updated } = await user.roles().sync([1, 2, 3]);
-
-// Toggle (attach if not present, detach if present)
-await user.roles().toggle([1, 2]);
-
-// Query with pivot constraints
-const activeRoles = await user.roles()
-  .wherePivot('expires_at', '>', new Date())
-  .wherePivotNotNull('granted_by')
-  .get();
-
-// Update pivot data
-await user.roles().updateExistingPivot(1, {
-  expires_at: new Date('2027-12-31')
-});
-
-// Eager load with pivot data
-const users = await User.query()
-  .with({
-    roles: (query) => query.wherePivot('active', true)
-  })
-  .get();
-
-// Access pivot data
-const roles = await user.roles().get();
-const pivot = roles[0].getRelation('pivot');
-// { user_id, role_id, expires_at, granted_by, created_at, updated_at }
+// Property syntax (returns results directly)
+const allPosts = await user.posts;
 ```
 
-**Features:**
-- ✅ Automatic pivot table naming (alphabetically sorted model names)
-- ✅ Attach/detach/sync/toggle operations
-- ✅ Pivot table queries (wherePivot, wherePivotIn, wherePivotNull, etc.)
-- ✅ Additional pivot columns with `withPivot()`
-- ✅ Automatic pivot timestamps with `withTimestamps()`
-- ✅ Custom pivot accessor with `as()`
-- ✅ Update pivot data with `updateExistingPivot()`
-- ✅ Full eager loading support
+Without `@DynamicRelation`, you must always call the method: `user.posts().get()`.
+
+## Controllers
+
+```typescript
+import { Controller, Injectable, ValidateRequest } from '@orchestr-sh/orchestr';
+
+@Injectable()
+export class UserController extends Controller {
+  constructor(private service: UserService) {
+    super();
+  }
+
+  @ValidateRequest()
+  async index(req: GetUsersRequest, res: any) {
+    const users = await User.query().with('posts').get();
+    return res.json({ data: users });
+  }
+
+  async show(req: any, res: any) {
+    const user = await User.find(req.routeParam('id'));
+    if (!user) return res.status(404).json({ error: 'Not found' });
+    return res.json({ data: user });
+  }
+}
+
+// Register route
+Route.get('/users', [UserController, 'index']);
+Route.get('/users/:id', [UserController, 'show']);
+```
+
+## FormRequest Validation
+
+```typescript
+import { FormRequest, ValidationRules } from '@orchestr-sh/orchestr';
+
+export class StoreUserRequest extends FormRequest {
+  protected authorize(): boolean {
+    return true; // Add authorization logic
+  }
+
+  protected rules(): ValidationRules {
+    return {
+      name: 'required|string|min:3',
+      email: 'required|email',
+      password: 'required|min:8',
+    };
+  }
+}
+
+// Use with @ValidateRequest decorator
+@Injectable()
+export class UserController extends Controller {
+  @ValidateRequest()
+  async store(req: StoreUserRequest, res: any) {
+    const validated = req.validated();
+    const user = await User.create(validated);
+    return res.status(201).json({ data: user });
+  }
+}
+```
+
+## Configuration
 
 ### Database Setup
 
-Configure multiple database connections:
-
 ```typescript
-import { Application, DatabaseServiceProvider, DB } from 'orchestr';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
+import { DatabaseServiceProvider, DatabaseManager, DrizzleAdapter } from '@orchestr-sh/orchestr';
 
-const app = new Application(__dirname);
-
-// Register database service provider
-app.register(new DatabaseServiceProvider({
-  default: 'sqlite',
-  connections: {
-    sqlite: {
-      adapter: 'drizzle',
-      client: drizzle(new Database('database.sqlite'))
-    },
-    postgres: {
-      adapter: 'drizzle',
-      client: drizzle(process.env.DATABASE_URL!)
-    }
+export class DatabaseServiceProvider extends ServiceProvider {
+  register(): void {
+    this.app.singleton('db', () => {
+      const config = this.app.make('config').get('database');
+      const manager = new DatabaseManager(config);
+      manager.registerAdapter('drizzle', (config) => new DrizzleAdapter(config));
+      return manager;
+    });
   }
-}));
 
-await app.boot();
+  async boot(): Promise<void> {
+    const db = this.app.make('db');
+    await db.connection().connect();
+    Ensemble.setConnectionResolver(db);
+  }
+}
 
-// Use default connection
-const users = await DB.table('users').get();
-
-// Use specific connection
-const posts = await DB.connection('postgres').table('posts').get();
+// Register in your app
+app.register(DatabaseServiceProvider);
 ```
 
-## Complete Example
+### Service Providers
 
-Here's a complete example showing routing, database, and ORM:
-
-**index.ts**
 ```typescript
-import 'reflect-metadata';
-import { Application, Kernel, DatabaseServiceProvider } from 'orchestr';
-import { AppRouteServiceProvider } from './app/Providers/AppRouteServiceProvider';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
+import { ServiceProvider } from '@orchestr-sh/orchestr';
 
-const app = new Application(__dirname);
-
-// Register database
-app.register(new DatabaseServiceProvider({
-  default: 'sqlite',
-  connections: {
-    sqlite: {
-      adapter: 'drizzle',
-      client: drizzle(new Database('database.sqlite'))
-    }
+export class AppServiceProvider extends ServiceProvider {
+  register(): void {
+    this.app.singleton('myService', () => new MyService());
   }
-}));
 
-// Register routes
-app.register(AppRouteServiceProvider);
-
-await app.boot();
-
-const kernel = new Kernel(app);
-kernel.listen(3000);
-```
-
-**app/Models/User.ts**
-```typescript
-import { Ensemble, HasMany, softDeletes } from 'orchestr';
-import { Post } from './Post';
-
-export class User extends softDeletes(Ensemble) {
-  protected table = 'users';
-  protected fillable = ['name', 'email', 'password'];
-  protected hidden = ['password'];
-
-  protected casts = {
-    email_verified_at: 'datetime',
-    is_admin: 'boolean'
-  };
-
-  // Define relationship
-  posts(): HasMany<Post, User> {
-    return this.hasMany(Post);
+  async boot(): Promise<void> {
+    // Bootstrap code
   }
 }
 ```
 
-**app/Models/Post.ts**
+## API Reference
+
+### Ensemble Methods
+
 ```typescript
-import { Ensemble, BelongsTo } from 'orchestr';
-import { User } from './User';
+// Query
+User.query()              // Get query builder
+User.find(id)             // Find by primary key
+User.findOrFail(id)       // Find or throw error
+User.all()                // Get all records
+User.create(data)         // Create and save
 
-export class Post extends Ensemble {
-  protected table = 'posts';
-  protected fillable = ['user_id', 'title', 'content', 'published_at'];
-
-  author(): BelongsTo<User, Post> {
-    return this.belongsTo(User, 'user_id');
-  }
-}
+// Instance methods
+user.save()               // Save changes
+user.delete()             // Delete record
+user.refresh()            // Reload from database
+user.load('posts')        // Lazy load relationship
+user.toObject()           // Convert to plain object
 ```
 
-**routes/api.ts**
+### Query Builder Methods
+
 ```typescript
-import { Route, DB } from 'orchestr';
-import { User } from '../app/Models/User';
-
-Route.group({ prefix: 'api' }, () => {
-  // Using query builder
-  Route.get('/users', async (req, res) => {
-    const users = await DB.table('users')
-      .where('active', true)
-      .orderBy('created_at', 'desc')
-      .get();
-
-    return res.json({ users });
-  });
-
-  // Using Ensemble ORM with eager loading
-  Route.get('/users/:id', async (req, res) => {
-    const user = await User.query()
-      .with('posts')
-      .find(req.routeParam('id'));
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    return res.json({ user: user.toObject() });
-  });
-
-  Route.post('/users', async (req, res) => {
-    const user = await User.query().create(
-      req.only(['name', 'email', 'password'])
-    );
-
-    return res.status(201).json({ user });
-  });
-
-  Route.delete('/users/:id', async (req, res) => {
-    const user = await User.query().find(req.routeParam('id'));
-    await user?.delete(); // Soft delete
-
-    return res.json({ message: 'User deleted' });
-  });
-});
+.where(column, value)
+.where(column, operator, value)
+.orWhere(column, value)
+.whereIn(column, array)
+.whereBetween(column, [min, max])
+.whereNull(column)
+.orderBy(column, direction)
+.limit(number)
+.offset(number)
+.join(table, first, operator, second)
+.groupBy(column)
+.having(column, operator, value)
+.select(columns)
+.count()
+.sum(column)
+.avg(column)
+.min(column)
+.max(column)
 ```
 
-## Architecture
+### Relationship Methods
 
-Orchestr follows Laravel's architecture exactly:
+```typescript
+// HasOne, HasMany, BelongsTo
+.get()                    // Execute query
+.first()                  // Get first result
+.create(data)             // Create related model
+.where(column, value)     // Add constraint
 
-```
-src/
-├── Container/
-│   └── Container.ts              # IoC Container with DI
-├── Foundation/
-│   ├── Application.ts            # Core application class
-│   ├── ServiceProvider.ts        # Service provider base
-│   └── Http/
-│       └── Kernel.ts             # HTTP kernel
-├── Routing/
-│   ├── Router.ts                 # Route registration and dispatch
-│   ├── Route.ts                  # Individual route
-│   ├── Request.ts                # HTTP request wrapper
-│   ├── Response.ts               # HTTP response wrapper
-│   └── Controller.ts             # Base controller
-├── Database/
-│   ├── DatabaseManager.ts        # Multi-connection manager
-│   ├── Connection.ts             # Database connection
-│   ├── Query/
-│   │   ├── Builder.ts            # Query builder
-│   │   └── Expression.ts         # Raw SQL expressions
-│   ├── Ensemble/
-│   │   ├── Ensemble.ts           # Base ORM model (like Eloquent)
-│   │   ├── EnsembleBuilder.ts    # Model query builder
-│   │   ├── EnsembleCollection.ts # Model collection
-│   │   ├── SoftDeletes.ts        # Soft delete trait
-│   │   ├── Relations/
-│   │   │   ├── Relation.ts       # Base relation class
-│   │   │   ├── HasOne.ts         # One-to-one relationship
-│   │   │   ├── HasMany.ts        # One-to-many relationship
-│   │   │   ├── BelongsTo.ts      # Inverse relationship
-│   │   │   └── BelongsToMany.ts  # Many-to-many relationship
-│   │   └── Concerns/
-│   │       ├── HasAttributes.ts  # Attribute handling & casting
-│   │       ├── HasTimestamps.ts  # Timestamp management
-│   │       └── HasRelationships.ts # Relationship functionality
-│   ├── Adapters/
-│   │   └── DrizzleAdapter.ts     # Drizzle ORM adapter
-│   └── DatabaseServiceProvider.ts
-├── Support/
-│   ├── Facade.ts                 # Facade base class
-│   └── helpers.ts                # Helper functions
-├── Facades/
-│   ├── Route.ts                  # Route facade
-│   └── DB.ts                     # Database facade
-└── Providers/
-    └── RouteServiceProvider.ts   # Route service provider
+// BelongsToMany
+.attach(ids)              // Attach related models
+.detach(ids)              // Detach related models
+.sync(ids)                // Sync relationships
+.toggle(ids)              // Toggle relationships
+.wherePivot(column, value) // Query pivot table
+.updateExistingPivot(id, data) // Update pivot data
+
+// All relationships
+.with('relation')         // Eager load
+.with(['relation1', 'relation2'])
+.with({ relation: (q) => q.where(...) })
 ```
 
-## TypeScript Benefits
+### Available Relationships
 
-While maintaining Laravel's API, you get:
+- `HasOne` - One-to-one
+- `HasMany` - One-to-many
+- `BelongsTo` - Inverse of HasOne/HasMany
+- `BelongsToMany` - Many-to-many
+- `MorphOne` - Polymorphic one-to-one
+- `MorphMany` - Polymorphic one-to-many
+- `MorphTo` - Inverse of MorphOne/MorphMany
+- `MorphToMany` - Polymorphic many-to-many
+- `MorphedByMany` - Inverse of MorphToMany
 
-- **Type Safety** - Full TypeScript type checking
-- **Better IDE Support** - Autocomplete and IntelliSense
-- **Reflection** - Automatic dependency injection
-- **Modern Async** - Native async/await support
-- **Performance** - Compiled JavaScript performance
+## Features
 
-## Roadmap
-
-Core components completed and in progress:
-
-- [x] Service Container & Dependency Injection
-- [x] Service Providers
-- [x] Configuration System
-- [x] HTTP Router & Route Files
-- [x] Request/Response
-- [x] Middleware Pipeline
-- [x] Controllers
-- [x] Facades (Route, DB)
-- [x] Database Query Builder
-- [x] Ensemble ORM (Eloquent equivalent)
-- [x] Multi-connection Database Manager
-- [x] Soft Deletes
-- [x] Model Attributes & Casting
-- [x] Model Relationships (HasOne, HasMany, BelongsTo)
-- [x] Many-to-Many Relationships (BelongsToMany)
-- [x] Eager/Lazy Loading
-- [x] FormRequest Validation & Authorization
-- [ ] Relationship Queries (has, whereHas, withCount)
-- [ ] Polymorphic Relationships
-- [ ] Database Migrations
-- [ ] Database Seeding
-- [ ] Authentication & Authorization
-- [ ] Queue System
-- [ ] Events & Listeners
-- [ ] File Storage
-- [ ] Cache System
-- [ ] Template Engine (Blade equivalent)
-- [ ] CLI/Artisan equivalent
-- [ ] Testing utilities
-
-## Comparison to Laravel
-
-| Feature | Laravel | Orchestr |
-|---------|---------|----------|
-| Service Container | ✅ | ✅        |
-| Service Providers | ✅ | ✅        |
-| Configuration | ✅ | ✅        |
-| Routing | ✅ | ✅        |
-| Route Files | ✅ | ✅        |
-| Middleware | ✅ | ✅        |
-| Controllers | ✅ | ✅        |
-| Request/Response | ✅ | ✅        |
-| Facades | ✅ | ✅        |
-| Query Builder | ✅ | ✅        |
-| Eloquent ORM | ✅ | ✅ (Ensemble)       |
-| Soft Deletes | ✅ | ✅        |
-| Timestamps | ✅ | ✅        |
-| Attribute Casting | ✅ | ✅        |
-| Basic Relationships | ✅ | ✅        |
-| Eager/Lazy Loading | ✅ | ✅        |
-| Many-to-Many | ✅ | ✅        |
-| Polymorphic Relations | ✅ | 🚧       |
-| Migrations | ✅ | 🚧       |
-| Seeding | ✅ | 🚧       |
-| FormRequest Validation | ✅ | ✅        |
-| Authentication | ✅ | 🚧       |
-| Authorization | ✅ | 🚧       |
-| Events | ✅ | 🚧       |
-| Queues | ✅ | 🚧       |
-| Cache | ✅ | 🚧       |
-| File Storage | ✅ | 🚧       |
-| Mail | ✅ | 🚧       |
-| Notifications | ✅ | 🚧       |
+- ✅ Service Container & Dependency Injection
+- ✅ Configuration System
+- ✅ HTTP Router & Middleware
+- ✅ Controllers with DI
+- ✅ FormRequest Validation
+- ✅ Query Builder
+- ✅ Ensemble ORM (ActiveRecord)
+- ✅ Relationships (Standard + Polymorphic)
+- ✅ Eager/Lazy Loading
+- ✅ Soft Deletes
+- ✅ Attribute Casting
+- ✅ Timestamps
+- ✅ @DynamicRelation Decorator
 
 ## License
 
 MIT
+
+---
+
+Built with TypeScript. Inspired by Laravel.

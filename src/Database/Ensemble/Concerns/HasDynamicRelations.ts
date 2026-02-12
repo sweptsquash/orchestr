@@ -217,6 +217,21 @@ export type HasManyAccessor<TRelated extends import('../Ensemble').Ensemble, TPa
 export type BelongsToManyAccessor<TRelated extends import('../Ensemble').Ensemble, TParent extends import('../Ensemble').Ensemble> =
   TRelated[] | Promise<TRelated[]> | (() => import('../Relations/BelongsToMany').BelongsToMany<TRelated, TParent>);
 
+export type MorphOneAccessor<TRelated extends import('../Ensemble').Ensemble, TParent extends import('../Ensemble').Ensemble> =
+  TRelated | Promise<TRelated | null> | (() => import('../Relations/MorphOne').MorphOne<TRelated, TParent>);
+
+export type MorphManyAccessor<TRelated extends import('../Ensemble').Ensemble, TParent extends import('../Ensemble').Ensemble> =
+  TRelated[] | Promise<TRelated[]> | (() => import('../Relations/MorphMany').MorphMany<TRelated, TParent>);
+
+export type MorphToAccessor<TRelated extends import('../Ensemble').Ensemble> =
+  TRelated | Promise<TRelated | null> | (() => import('../Relations/MorphTo').MorphTo<any>);
+
+export type MorphToManyAccessor<TRelated extends import('../Ensemble').Ensemble, TParent extends import('../Ensemble').Ensemble> =
+  TRelated[] | Promise<TRelated[]> | (() => import('../Relations/MorphToMany').MorphToMany<TRelated, TParent>);
+
+export type MorphedByManyAccessor<TRelated extends import('../Ensemble').Ensemble, TParent extends import('../Ensemble').Ensemble> =
+  TRelated[] | Promise<TRelated[]> | (() => import('../Relations/MorphedByMany').MorphedByMany<TRelated, TParent>);
+
 /**
  * Decorator to convert a relationship method into a dynamic property
  *

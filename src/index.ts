@@ -60,7 +60,10 @@ export { EnsembleCollection } from './Database/Ensemble/EnsembleCollection';
 export { softDeletes } from './Database/Ensemble/SoftDeletes';
 
 // Ensemble Relations
-export { Relation, HasOne, HasMany, BelongsTo } from './Database/Ensemble/Relations';
+export { Relation, HasOne, HasMany, BelongsTo, BelongsToMany } from './Database/Ensemble/Relations';
+
+// Polymorphic Relations
+export { MorphMap, MorphOne, MorphMany, MorphTo, MorphToMany, MorphedByMany } from './Database/Ensemble/Relations';
 
 // Ensemble Concerns
 export { HasRelationshipsMixin } from './Database/Ensemble/Concerns/HasRelationships';
@@ -70,7 +73,12 @@ export type {
   BelongsToAccessor,
   HasOneAccessor,
   HasManyAccessor,
-  BelongsToManyAccessor
+  BelongsToManyAccessor,
+  MorphOneAccessor,
+  MorphManyAccessor,
+  MorphToAccessor,
+  MorphToManyAccessor,
+  MorphedByManyAccessor
 } from './Database/Ensemble/Concerns/HasDynamicRelations';
 
 // Ensemble Types

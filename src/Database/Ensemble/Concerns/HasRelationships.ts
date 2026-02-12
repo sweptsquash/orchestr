@@ -142,6 +142,156 @@ export abstract class HasRelationshipsMixin {
   }
 
   /**
+   * Define a polymorphic one-to-one relationship
+   */
+  protected morphOne<TRelated extends Ensemble>(
+    related: new () => TRelated,
+    name: string,
+    type?: string | null,
+    id?: string | null,
+    localKey?: string
+  ): import('../Relations/MorphOne').MorphOne<TRelated, any> {
+    const instance = new related();
+    const { MorphOne } = require('../Relations/MorphOne');
+
+    const finalLocalKey = localKey || (this as any).getKeyName();
+
+    return new MorphOne(
+      instance.newQuery() as EnsembleBuilder<TRelated>,
+      this as any,
+      name,
+      type,
+      id,
+      finalLocalKey
+    );
+  }
+
+  /**
+   * Define a polymorphic one-to-many relationship
+   */
+  protected morphMany<TRelated extends Ensemble>(
+    related: new () => TRelated,
+    name: string,
+    type?: string | null,
+    id?: string | null,
+    localKey?: string
+  ): import('../Relations/MorphMany').MorphMany<TRelated, any> {
+    const instance = new related();
+    const { MorphMany } = require('../Relations/MorphMany');
+
+    const finalLocalKey = localKey || (this as any).getKeyName();
+
+    return new MorphMany(
+      instance.newQuery() as EnsembleBuilder<TRelated>,
+      this as any,
+      name,
+      type,
+      id,
+      finalLocalKey
+    );
+  }
+
+  /**
+   * Define a polymorphic inverse relationship
+   */
+  protected morphTo(
+    name: string,
+    type?: string,
+    id?: string,
+    ownerKey?: string
+  ): import('../Relations/MorphTo').MorphTo<any> {
+    const { MorphTo } = require('../Relations/MorphTo');
+
+    const finalType = type || `${name}_type`;
+    const finalId = id || `${name}_id`;
+    const finalOwnerKey = ownerKey || 'id';
+
+    // MorphTo needs special handling - creates query builder dynamically
+    return new MorphTo(
+      (this as any).newQuery() as any,
+      this as any,
+      finalId,
+      finalType,
+      finalOwnerKey,
+      name
+    );
+  }
+
+  /**
+   * Define a polymorphic many-to-many relationship
+   */
+  protected morphToMany<TRelated extends Ensemble>(
+    related: new () => TRelated,
+    name: string,
+    table?: string,
+    foreignPivotKey?: string,
+    relatedPivotKey?: string,
+    parentKey?: string,
+    relatedKey?: string,
+    inverse: boolean = false
+  ): import('../Relations/MorphToMany').MorphToMany<TRelated, any> {
+    const instance = new related();
+    const { MorphToMany } = require('../Relations/MorphToMany');
+
+    const finalTable = table || `${name}s`;
+    const finalForeignPivotKey = foreignPivotKey || `${name}_id`;
+    const finalRelatedPivotKey = relatedPivotKey || instance.getForeignKey();
+    const morphType = `${name}_type`;
+    const finalParentKey = parentKey || (this as any).getKeyName();
+    const finalRelatedKey = relatedKey || instance.getKeyName();
+
+    return new MorphToMany(
+      instance.newQuery() as EnsembleBuilder<TRelated>,
+      this as any,
+      name,
+      finalTable,
+      finalForeignPivotKey,
+      finalRelatedPivotKey,
+      morphType,
+      finalParentKey,
+      finalRelatedKey,
+      '',
+      inverse
+    );
+  }
+
+  /**
+   * Define the inverse of a polymorphic many-to-many relationship
+   */
+  protected morphedByMany<TRelated extends Ensemble>(
+    related: new () => TRelated,
+    name: string,
+    table?: string,
+    foreignPivotKey?: string,
+    relatedPivotKey?: string,
+    parentKey?: string,
+    relatedKey?: string
+  ): import('../Relations/MorphedByMany').MorphedByMany<TRelated, any> {
+    const instance = new related();
+    const { MorphedByMany } = require('../Relations/MorphedByMany');
+
+    const finalTable = table || `${name}s`;
+    const finalForeignPivotKey = foreignPivotKey || `${name}_id`;
+    const finalRelatedPivotKey = relatedPivotKey || instance.getForeignKey();
+    const morphType = `${name}_type`;
+    const finalParentKey = parentKey || (this as any).getKeyName();
+    const finalRelatedKey = relatedKey || instance.getKeyName();
+
+    return new MorphedByMany(
+      instance.newQuery() as EnsembleBuilder<TRelated>,
+      this as any,
+      name,
+      finalTable,
+      finalForeignPivotKey,
+      finalRelatedPivotKey,
+      morphType,
+      finalParentKey,
+      finalRelatedKey,
+      ''
+    );
+  }
+
+  /**
    * Get the joining table name for a many-to-many relation
    */
   protected joiningTable(related: Ensemble): string {
