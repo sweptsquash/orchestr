@@ -29,6 +29,8 @@ export { Facade } from './Support/Facade';
 export { Route } from './Facades/Route';
 export { Config } from './Facades/Config';
 export { Event as EventFacade } from './Facades/Event';
+export { Queue as QueueFacade } from './Facades/Queue';
+export { Bus } from './Facades/Bus';
 
 // Helpers
 export { loadRoutes, base_path, routes_path } from './Support/helpers';
@@ -43,6 +45,7 @@ export { config } from './Support/helpers';
 // Providers
 export { RouteServiceProvider } from './Providers/RouteServiceProvider';
 export { DatabaseServiceProvider } from './Database/DatabaseServiceProvider';
+export { QueueServiceProvider } from './Queue/QueueServiceProvider';
 
 // Database
 export { DatabaseManager } from './Database/DatabaseManager';
@@ -131,6 +134,22 @@ export { EventListCommand } from './Console/Commands/EventListCommand';
 export { EventCacheCommand } from './Console/Commands/EventCacheCommand';
 export { EventClearCommand } from './Console/Commands/EventClearCommand';
 
+// Console Commands - Queue
+export { QueueWorkCommand } from './Console/Commands/QueueWorkCommand';
+export { QueueRestartCommand } from './Console/Commands/QueueRestartCommand';
+export { QueueFailedCommand } from './Console/Commands/QueueFailedCommand';
+export { QueueRetryCommand } from './Console/Commands/QueueRetryCommand';
+export { QueueForgetCommand } from './Console/Commands/QueueForgetCommand';
+export { QueueFlushCommand } from './Console/Commands/QueueFlushCommand';
+export { QueueClearCommand } from './Console/Commands/QueueClearCommand';
+export { QueueMonitorCommand } from './Console/Commands/QueueMonitorCommand';
+export { QueueTableCommand } from './Console/Commands/QueueTableCommand';
+export { QueueFailedTableCommand } from './Console/Commands/QueueFailedTableCommand';
+export { QueueBatchesTableCommand } from './Console/Commands/QueueBatchesTableCommand';
+export { QueuePruneBatchesCommand } from './Console/Commands/QueuePruneBatchesCommand';
+export { QueuePruneFailedCommand } from './Console/Commands/QueuePruneFailedCommand';
+export { MakeJobCommand } from './Console/Commands/MakeJobCommand';
+
 // Database Types
 export type { DatabaseAdapter, DatabaseConfig, QueryResult } from './Database/Contracts/DatabaseAdapter';
 export type {
@@ -174,6 +193,57 @@ export {
 // Event Contracts & Types
 export type { DispatcherContract } from './Events/Contracts/Dispatcher';
 export type { EventListener, EventSubscriber, ListenerInterface, ListenerClosure, EventPayload, QueuedListener } from './Events/types';
+
+// Queue
+export { Job } from './Queue/Job';
+export type { JobClass } from './Queue/Job';
+export { QueueManager } from './Queue/QueueManager';
+export type { QueueConfig, QueueConnectionConfig, QueueFailedConfig, QueueBatchingConfig } from './Queue/QueueManager';
+export { PendingDispatch as QueuePendingDispatch } from './Queue/PendingDispatch';
+export { PendingChain } from './Queue/PendingChain';
+export { JobPayload } from './Queue/JobPayload';
+
+// Queue Contracts
+export type { QueueableJob } from './Queue/Contracts/QueueableJob';
+export type { QueueDriver, QueueDriverJob } from './Queue/Contracts/QueueDriver';
+export type { ShouldBeUnique, ShouldBeUniqueUntilProcessing } from './Queue/Contracts/ShouldBeUnique';
+export { isShouldBeUnique } from './Queue/Contracts/ShouldBeUnique';
+
+// Queue Drivers
+export { SyncDriver } from './Queue/Drivers/SyncDriver';
+export { DatabaseDriver as DatabaseQueueDriver } from './Queue/Drivers/DatabaseDriver';
+export { NullDriver as NullQueueDriver } from './Queue/Drivers/NullDriver';
+
+// Queue Workers
+export { Worker } from './Queue/Workers/Worker';
+export type { WorkerOptions } from './Queue/Workers/WorkerOptions';
+
+// Queue Middleware
+export type { JobMiddleware } from './Queue/Middleware/JobMiddleware';
+export { RateLimited } from './Queue/Middleware/RateLimited';
+export { WithoutOverlapping } from './Queue/Middleware/WithoutOverlapping';
+export { ThrottlesExceptions } from './Queue/Middleware/ThrottlesExceptions';
+
+// Queue Failed Jobs
+export type { FailedJobProvider, FailedJobRecord } from './Queue/Failed/FailedJobProvider';
+export { DatabaseFailedJobProvider } from './Queue/Failed/DatabaseFailedJobProvider';
+
+// Queue Batching
+export { Batch } from './Queue/Batching/Batch';
+export { PendingBatch } from './Queue/Batching/PendingBatch';
+
+// Queue Events
+export { JobQueued } from './Queue/Events/JobQueued';
+export { JobProcessing } from './Queue/Events/JobProcessing';
+export { JobProcessed } from './Queue/Events/JobProcessed';
+export { JobFailed } from './Queue/Events/JobFailed';
+export { JobExceptionOccurred } from './Queue/Events/JobExceptionOccurred';
+export { JobRetryRequested } from './Queue/Events/JobRetryRequested';
+export { WorkerStopping } from './Queue/Events/WorkerStopping';
+
+// Listener Queue Contract
+export { isShouldQueue } from './Listeners/Contracts/ShouldQueue';
+export type { ShouldQueue } from './Listeners/Contracts/ShouldQueue';
 
 // Types
 export type { HttpMethod, RouteAction, Middleware } from './Routing/Route';
