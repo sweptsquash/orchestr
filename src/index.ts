@@ -32,9 +32,10 @@ export { Event as EventFacade } from './Facades/Event';
 export { Queue as QueueFacade } from './Facades/Queue';
 export { Bus } from './Facades/Bus';
 export { Cache } from './Facades/Cache';
+export { View as ViewFacade } from './Facades/View';
 
 // Helpers
-export { loadRoutes, base_path, routes_path } from './Support/helpers';
+export { loadRoutes, base_path, routes_path, resource_path, view } from './Support/helpers';
 
 // Decorators
 export { Injectable } from './Support/Injectable';
@@ -48,6 +49,8 @@ export { RouteServiceProvider } from './Providers/RouteServiceProvider';
 export { DatabaseServiceProvider } from './Database/DatabaseServiceProvider';
 export { QueueServiceProvider } from './Queue/QueueServiceProvider';
 export { CacheServiceProvider } from './Cache/CacheServiceProvider';
+export { ViewServiceProvider } from './View/ViewServiceProvider';
+export type { ViewConfig } from './View/ViewServiceProvider';
 
 // Database
 export { DatabaseManager } from './Database/DatabaseManager';
@@ -156,6 +159,9 @@ export { MakeJobCommand } from './Console/Commands/MakeJobCommand';
 export { CacheClearCommand } from './Console/Commands/CacheClearCommand';
 export { CacheForgetCommand } from './Console/Commands/CacheForgetCommand';
 export { CacheTableCommand } from './Console/Commands/CacheTableCommand';
+
+// Console Commands - View
+export { MakeViewCommand } from './Console/Commands/MakeViewCommand';
 
 // Database Types
 export type { DatabaseAdapter, DatabaseConfig, QueryResult } from './Database/Contracts/DatabaseAdapter';
@@ -283,6 +289,14 @@ export { CacheMissed } from './Cache/Events/CacheMissed';
 export { KeyWritten } from './Cache/Events/KeyWritten';
 export { KeyForgotten } from './Cache/Events/KeyForgotten';
 export { CacheFlushed } from './Cache/Events/CacheFlushed';
+
+// View
+export { View } from './View/View';
+export { ViewFactory } from './View/ViewFactory';
+export type { ViewEngine } from './View/Engines/ViewEngine';
+export { FileEngine } from './View/Engines/FileEngine';
+export { TemplateEngine } from './View/Engines/TemplateEngine';
+export type { TemplateEngineResolver } from './View/Engines/TemplateEngine';
 
 // Types
 export type { HttpMethod, RouteAction, Middleware } from './Routing/Route';

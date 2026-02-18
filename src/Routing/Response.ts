@@ -1,4 +1,19 @@
 import { ServerResponse } from 'http';
+import type { ViewFactory } from '../View/ViewFactory';
+import { getGlobalApp } from '../Support/helpers';
+
+// Lazily resolve the ViewFactory from the container at call time
+function resolveViewFactory(): ViewFactory | null {
+  try {
+    const app = getGlobalApp();
+    if (app) {
+      return app.make('view') as ViewFactory;
+    }
+  } catch {
+    // View system not registered
+  }
+  return null;
+}
 
 /**
  * Response - Laravel's HTTP Response wrapper
@@ -148,14 +163,25 @@ export class Response {
   }
 
   /**
-   * Send a view response (simplified)
-   * Laravel: view('welcome', ['name' => 'John'])
+   * Send a view response.
+   * Laravel: response()->view('welcome', ['name' => 'John'])
+   *
+   * Resolves the view via the ViewFactory registered in the container,
+   * then renders it asynchronously and sends the resulting HTML.
    */
-  view(template: string, data: Record<string, any> = {}): void {
-    // This would normally render a template
-    // For now, just send a basic HTML response
-    this.header('Content-Type', 'text/html');
-    this.send(`<html><body><h1>View: ${template}</h1><pre>${JSON.stringify(data, null, 2)}</pre></body></html>`);
+  async view(template: string, data: Record<string, any> = {}): Promise<void> {
+    const factory = resolveViewFactory();
+
+    if (factory) {
+      const viewInstance = factory.make(template, data);
+      const html = await viewInstance.render();
+      this.header('Content-Type', 'text/html');
+      this.send(html);
+    } else {
+      // Fallback when the view system is not registered
+      this.header('Content-Type', 'text/html');
+      this.send(`<html><body><h1>View: ${template}</h1><pre>${JSON.stringify(data, null, 2)}</pre></body></html>`);
+    }
   }
 
   /**

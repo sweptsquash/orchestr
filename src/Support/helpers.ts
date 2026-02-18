@@ -4,6 +4,8 @@
 
 import { Application } from '../Foundation/Application';
 import type { Config as ConfigClass } from '../Foundation/Config/Config';
+import type { ViewFactory } from '../View/ViewFactory';
+import type { View } from '../View/View';
 
 // Global application instance for helpers
 let globalApp: Application | null = null;
@@ -14,6 +16,14 @@ let globalApp: Application | null = null;
  */
 export function setGlobalApp(app: Application): void {
   globalApp = app;
+}
+
+/**
+ * Get the global application instance
+ * @internal
+ */
+export function getGlobalApp(): Application | null {
+  return globalApp;
 }
 
 /**
@@ -63,4 +73,28 @@ export function base_path(path: string = ''): string {
  */
 export function routes_path(path: string = ''): string {
   return base_path(`routes${path ? '/' + path : ''}`);
+}
+
+/**
+ * Get the resources/views directory path
+ */
+export function resource_path(path: string = ''): string {
+  return base_path(`resources${path ? '/' + path : ''}`);
+}
+
+/**
+ * Create a new view instance.
+ * Laravel: view('welcome', ['name' => 'John'])
+ *
+ * @param {string} name   - Dot-notation view name (e.g. 'welcome', 'layouts.app')
+ * @param {Record<string, any>} data - Data to pass to the view
+ * @returns {View}
+ */
+export function view(name: string, data: Record<string, any> = {}): View {
+  if (!globalApp) {
+    throw new Error('Application not initialized. Call setGlobalApp() first.');
+  }
+
+  const factory = globalApp.make<ViewFactory>('view');
+  return factory.make(name, data);
 }

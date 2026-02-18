@@ -899,6 +899,9 @@ npx orchestr queue:prune-batches --hours=24 # Prune batches older than N hours
 npx orchestr cache:clear [--store=redis]    # Clear all cache or specific store
 npx orchestr cache:forget <key> [--store=redis]  # Forget specific cache key
 npx orchestr cache:table                    # Create cache table migration
+
+# Views
+npx orchestr make:view <name>               # Create view template
 ```
 
 ## Queue System
@@ -1524,6 +1527,145 @@ Cache.store(name?)
 Cache.getPrefix()
 ```
 
+## View System
+
+Orchestr includes a view system for rendering HTML templates, mirroring Laravel's Blade. Views are stored in `resources/views/` and use dot-notation for resolution (e.g., `'layouts.app'` resolves to `resources/views/layouts/app.html`).
+
+### Configuration
+
+```typescript
+import { ViewServiceProvider } from '@orchestr-sh/orchestr';
+
+app.register(new ViewServiceProvider(app));
+
+// Configure in ConfigServiceProvider
+{
+  view: {
+    paths: ['resources/views'],
+    extensions: ['.html', '.orchestr.html'],
+  },
+}
+```
+
+### Basic Usage
+
+Return views directly from route handlers using the `view()` helper:
+
+```typescript
+import { Route, view } from '@orchestr-sh/orchestr';
+
+Route.get('/', () => {
+  return view('welcome', { name: 'World' });
+});
+```
+
+### View Facade
+
+```typescript
+import { View } from '@orchestr-sh/orchestr';
+
+// Create a view instance
+const v = View.make('welcome', { name: 'World' });
+const html = await v.render();
+
+// Check if a view exists
+if (View.exists('emails.invoice')) {
+  // ...
+}
+
+// Share data with all views
+View.share('appName', 'My App');
+```
+
+### Chaining Data
+
+```typescript
+const v = view('welcome')
+  .with('name', 'John')
+  .with({ role: 'admin', active: true });
+```
+
+### Template Syntax
+
+**Output:**
+
+```html
+{{ variable }}              <!-- HTML-escaped (XSS-safe) -->
+{!! variable !!}            <!-- Raw/unescaped output -->
+```
+
+**Conditionals:**
+
+```html
+@if(user.isAdmin)
+  <p>Welcome, admin!</p>
+@elseif(user.isMember)
+  <p>Welcome, member!</p>
+@else
+  <p>Welcome, guest!</p>
+@endif
+```
+
+**Loops:**
+
+```html
+@foreach(users as user)
+  <li>{{ user.name }}</li>
+@endforeach
+```
+
+**Includes:**
+
+```html
+@include('partials.nav')
+@include('partials.alert', { type: 'success' })
+```
+
+### Layouts
+
+Define a layout file (`resources/views/layouts/app.html`):
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>@yield('title', 'My App')</title>
+</head>
+<body>
+  @yield('content')
+</body>
+</html>
+```
+
+Extend it from a child template (`resources/views/welcome.html`):
+
+```html
+@extends('layouts.app')
+
+@section('title')Welcome@endsection
+
+@section('content')
+  <h1>Hello, {{ name }}!</h1>
+@endsection
+```
+
+### Response Integration
+
+```typescript
+// From a route handler
+Route.get('/', (req, res) => {
+  return res.view('welcome', { name: 'World' });
+});
+```
+
+### View Commands
+
+```bash
+# Create a new view template
+npx orchestr make:view welcome
+npx orchestr make:view emails.invoice    # Creates resources/views/emails/invoice.html
+```
+
 ## Features
 
 - ✅ Service Container & Dependency Injection
@@ -1543,6 +1685,7 @@ Cache.getPrefix()
 - ✅ Event Testing (Fakes & Assertions)
 - ✅ Queue System (Jobs, Chains, Batches, Workers)
 - ✅ Cache System (Tags, Locks, Flexible Caching)
+- ✅ View System (Templates, Layouts, Directives)
 - ✅ Soft Deletes
 - ✅ Attribute Casting
 - ✅ Timestamps

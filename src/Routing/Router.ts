@@ -4,6 +4,7 @@ import { Request } from './Request';
 import { Response } from './Response';
 import { FormRequest } from '../Foundation/Http/FormRequest';
 import { ValidationException } from '../Foundation/Http/ValidationException';
+import { View } from '../View/View';
 
 /**
  * Route group attributes
@@ -242,7 +243,13 @@ export class Router {
 
     // If the handler returned a value and response wasn't sent, send it
     if (result !== undefined && !res.finished) {
-      res.send(result);
+      if (result instanceof View) {
+        const html = await result.render();
+        res.header('Content-Type', 'text/html');
+        res.send(html);
+      } else {
+        res.send(result);
+      }
     }
   }
 
