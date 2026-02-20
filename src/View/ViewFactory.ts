@@ -16,11 +16,7 @@ export class ViewFactory implements TemplateEngineResolver {
   protected engine: ViewEngine;
   protected shared: Record<string, any> = {};
 
-  constructor(
-    engine: ViewEngine,
-    paths: string[],
-    extensions: string[] = ['.html', '.orchestr.html']
-  ) {
+  constructor(engine: ViewEngine, paths: string[], extensions: string[] = ['.html', '.orchestr.html']) {
     this.engine = engine;
     this.paths = paths;
     this.extensions = extensions;

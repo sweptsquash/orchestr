@@ -52,7 +52,7 @@ import 'reflect-metadata';
  * }
  * ```
  */
-export function HandlesEvents(events: Function[]): ClassDecorator {
+export function HandlesEvents(events: (new (...args: any[]) => any)[]): ClassDecorator {
   return function (target: any) {
     // Store event types in metadata
     // This metadata is read by EventDiscovery.extractEventTypes()
@@ -95,7 +95,7 @@ export function hasHandlesEventsMetadata(target: any): boolean {
  * // Returns: [UserRegistered]
  * ```
  */
-export function getHandledEvents(target: any): Function[] {
+export function getHandledEvents(target: any): (new (...args: any[]) => any)[] {
   if (!hasHandlesEventsMetadata(target)) {
     return [];
   }

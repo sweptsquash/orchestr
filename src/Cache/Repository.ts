@@ -44,7 +44,7 @@ export class Repository implements RepositoryContract {
     return this;
   }
 
-  async get(key: string, defaultValue?: any): Promise<any> {
+  async get<T = any>(key: string, defaultValue?: T | (() => T)): Promise<T | null> {
     const value = await this.store.get(key);
 
     if (value !== null && value !== undefined) {
@@ -52,17 +52,17 @@ export class Repository implements RepositoryContract {
     }
 
     if (typeof defaultValue === 'function') {
-      return defaultValue();
+      return (defaultValue as () => T)();
     }
 
     return defaultValue ?? null;
   }
 
-  async many(keys: string[]): Promise<Record<string, any>> {
+  async many<T = any>(keys: string[]): Promise<Record<string, T | null>> {
     return this.store.many(keys);
   }
 
-  async put(key: string, value: any, ttl?: number | Date): Promise<boolean> {
+  async put<T = any>(key: string, value: T, ttl?: number | Date): Promise<boolean> {
     const seconds = this.getSeconds(ttl);
 
     if (seconds === null) {
@@ -76,7 +76,7 @@ export class Repository implements RepositoryContract {
     return this.store.put(key, value, seconds);
   }
 
-  async putMany(values: Record<string, any>, ttl?: number | Date): Promise<boolean> {
+  async putMany<T = any>(values: Record<string, T>, ttl?: number | Date): Promise<boolean> {
     const seconds = this.getSeconds(ttl) ?? 0;
     return this.store.putMany(values, seconds);
   }
@@ -89,7 +89,7 @@ export class Repository implements RepositoryContract {
     return this.store.decrement(key, value);
   }
 
-  async forever(key: string, value: any): Promise<boolean> {
+  async forever<T = any>(key: string, value: T): Promise<boolean> {
     return this.store.forever(key, value);
   }
 
@@ -116,7 +116,7 @@ export class Repository implements RepositoryContract {
     return !(await this.has(key));
   }
 
-  async pull(key: string, defaultValue?: any): Promise<any> {
+  async pull<T = any>(key: string, defaultValue?: T): Promise<T | null> {
     const value = await this.get(key, defaultValue);
 
     if (value !== null && value !== undefined && value !== defaultValue) {
@@ -126,7 +126,7 @@ export class Repository implements RepositoryContract {
     return value;
   }
 
-  async add(key: string, value: any, ttl?: number | Date): Promise<boolean> {
+  async add<T = any>(key: string, value: T, ttl?: number | Date): Promise<boolean> {
     if (await this.has(key)) {
       return false;
     }
@@ -134,7 +134,7 @@ export class Repository implements RepositoryContract {
     return this.put(key, value, ttl);
   }
 
-  async remember(key: string, ttl: number | Date, callback: () => any | Promise<any>): Promise<any> {
+  async remember<T = any>(key: string, ttl: number | Date, callback: () => T | Promise<T>): Promise<T> {
     const value = await this.store.get(key);
 
     if (value !== null && value !== undefined) {
@@ -153,7 +153,7 @@ export class Repository implements RepositoryContract {
     return result;
   }
 
-  async rememberForever(key: string, callback: () => any | Promise<any>): Promise<any> {
+  async rememberForever<T = any>(key: string, callback: () => T | Promise<T>): Promise<T> {
     const value = await this.store.get(key);
 
     if (value !== null && value !== undefined) {
@@ -166,7 +166,7 @@ export class Repository implements RepositoryContract {
     return result;
   }
 
-  async flexible(key: string, ttl: [number, number], callback: () => any | Promise<any>): Promise<any> {
+  async flexible<T = any>(key: string, ttl: [number, number], callback: () => T | Promise<T>): Promise<T> {
     const [freshTtl, staleTtl] = ttl;
 
     // Try to get the cached value with its freshness

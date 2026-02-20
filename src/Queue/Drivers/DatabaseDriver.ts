@@ -43,9 +43,7 @@ export class DatabaseDriver implements QueueDriver {
     const queueName = this.getQueue(queue);
     const connection = this.getConnection();
 
-    const result = await connection.table(this.table)
-      .where('queue', '=', queueName)
-      .count();
+    const result = await connection.table(this.table).where('queue', '=', queueName).count();
 
     return Number(result) || 0;
   }
@@ -127,7 +125,8 @@ export class DatabaseDriver implements QueueDriver {
 
     // Find the next available job
     // First, expire any reserved jobs that have been held too long
-    await connection.table(this.table)
+    await connection
+      .table(this.table)
       .where('queue', '=', queueName)
       .where('reserved_at', '<=', now - this.retryAfter)
       .update({
@@ -135,7 +134,8 @@ export class DatabaseDriver implements QueueDriver {
       });
 
     // Get the next available job and reserve it
-    const job = await connection.table(this.table)
+    const job = await connection
+      .table(this.table)
       .where('queue', '=', queueName)
       .where('available_at', '<=', now)
       .whereNull('reserved_at')
@@ -148,7 +148,8 @@ export class DatabaseDriver implements QueueDriver {
     }
 
     // Reserve the job
-    await connection.table(this.table)
+    await connection
+      .table(this.table)
       .where('id', '=', job.id)
       .update({
         reserved_at: now,
@@ -170,7 +171,8 @@ export class DatabaseDriver implements QueueDriver {
     const now = Math.floor(Date.now() / 1000);
     const connection = this.getConnection();
 
-    await connection.table(this.table)
+    await connection
+      .table(this.table)
       .where('id', '=', id)
       .update({
         reserved_at: null,
@@ -181,9 +183,7 @@ export class DatabaseDriver implements QueueDriver {
   async delete(id: string): Promise<void> {
     const connection = this.getConnection();
 
-    await connection.table(this.table)
-      .where('id', '=', id)
-      .delete();
+    await connection.table(this.table).where('id', '=', id).delete();
   }
 
   async clear(queue?: string): Promise<number> {
@@ -192,9 +192,7 @@ export class DatabaseDriver implements QueueDriver {
 
     const count = await this.size(queueName);
 
-    await connection.table(this.table)
-      .where('queue', '=', queueName)
-      .delete();
+    await connection.table(this.table).where('queue', '=', queueName).delete();
 
     return count;
   }

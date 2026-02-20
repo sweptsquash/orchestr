@@ -36,15 +36,12 @@ export interface ShouldBeUnique {
  * Similar to ShouldBeUnique, but the lock is released when
  * the job begins processing rather than when it completes.
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ShouldBeUniqueUntilProcessing extends ShouldBeUnique {}
 
 /**
  * Type guard to check if a job implements ShouldBeUnique
  */
 export function isShouldBeUnique(job: any): job is ShouldBeUnique {
-  return (
-    job !== null &&
-    typeof job === 'object' &&
-    typeof job.uniqueId === 'function'
-  );
+  return job !== null && typeof job === 'object' && typeof job.uniqueId === 'function';
 }

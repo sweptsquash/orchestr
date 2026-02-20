@@ -142,7 +142,7 @@ export class Application extends Container {
    */
   private async bootProvider(provider: ServiceProvider): Promise<void> {
     if (typeof provider.boot === 'function') {
-      const result = this.call(provider.boot.bind(provider));
+      const result = this.call<any>(provider.boot.bind(provider));
       if (result instanceof Promise) {
         await result;
       }
@@ -258,8 +258,6 @@ export class Application extends Container {
    * @returns {string[]} Array of absolute directory paths
    */
   getEventDiscoveryPaths(): string[] {
-    return this.eventDiscoveryPaths.length > 0
-      ? this.eventDiscoveryPaths
-      : [this.path('Listeners')];
+    return this.eventDiscoveryPaths.length > 0 ? this.eventDiscoveryPaths : [this.path('Listeners')];
   }
 }

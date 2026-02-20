@@ -144,6 +144,7 @@ export class Dispatchable {
  * Type declaration to merge Dispatchable methods into Event class
  * This enables TypeScript to understand that Event has these static methods
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface Event extends Dispatchable {}
 
 /**

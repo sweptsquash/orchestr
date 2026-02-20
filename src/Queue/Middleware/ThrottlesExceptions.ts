@@ -84,7 +84,7 @@ export class ThrottlesExceptions implements JobMiddleware {
       } else {
         exceptionStore.set(key, {
           count: 1,
-          resetAt: now + (this.decayMinutes * 60),
+          resetAt: now + this.decayMinutes * 60,
         });
       }
 

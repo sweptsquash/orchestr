@@ -57,7 +57,7 @@ export async function loadRoutes(routePath: string): Promise<void> {
   try {
     await import(routePath);
   } catch (error) {
-    throw new Error(`Failed to load routes from ${routePath}: ${error}`);
+    throw new Error(`Failed to load routes from ${routePath}: ${error}`, { cause: error });
   }
 }
 

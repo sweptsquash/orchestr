@@ -23,21 +23,13 @@ export class CacheServiceProvider extends ServiceProvider {
       const manager = new CacheManager(config);
 
       // Register built-in drivers
-      manager.registerDriver('array', (storeConfig) =>
-        new ArrayStore(storeConfig, config.prefix)
-      );
+      manager.registerDriver('array', (storeConfig) => new ArrayStore(storeConfig, config.prefix));
 
-      manager.registerDriver('file', (storeConfig) =>
-        new FileStore(storeConfig, config.prefix)
-      );
+      manager.registerDriver('file', (storeConfig) => new FileStore(storeConfig, config.prefix));
 
-      manager.registerDriver('database', (storeConfig) =>
-        new DatabaseStore(storeConfig, config.prefix, this.app)
-      );
+      manager.registerDriver('database', (storeConfig) => new DatabaseStore(storeConfig, config.prefix, this.app));
 
-      manager.registerDriver('null', () =>
-        new NullStore()
-      );
+      manager.registerDriver('null', () => new NullStore());
 
       return manager;
     });

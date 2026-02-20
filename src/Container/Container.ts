@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export type Abstract = string | symbol | Function;
 export type Concrete<T = any> = ((container: Container) => T) | (new (...args: any[]) => T);
 export type Binding = {
@@ -149,7 +150,7 @@ export class Container {
   private build<T>(concrete: Concrete<T>, parameters: any[] = []): T {
     // If concrete is a function (factory), call it
     if (typeof concrete === 'function' && concrete.prototype === undefined) {
-      return (concrete as Function)(this);
+      return (concrete as (container: Container) => T)(this);
     }
 
     // If concrete is a class, use reflection to get dependencies
@@ -165,6 +166,7 @@ export class Container {
    * Resolve all dependencies for a class constructor
    * Uses TypeScript's reflect-metadata to get parameter types
    */
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   private resolveDependencies(concrete: Function, parameters: any[] = []): any[] {
     const paramTypes = Reflect.getMetadata('design:paramtypes', concrete) || [];
 
@@ -216,7 +218,7 @@ export class Container {
    * Call the given Closure / class@method and inject its dependencies
    * Laravel: $app->call(callable)
    */
-  call(callback: Function, parameters: any[] = []): any {
+  call<T = any>(callback: (...args: any[]) => T, parameters: any[] = []): T {
     const paramTypes = Reflect.getMetadata('design:paramtypes', callback) || [];
     const dependencies = paramTypes.map((paramType: any, index: number) => {
       if (parameters[index] !== undefined) {

@@ -9,7 +9,7 @@ import { Application } from '../../Foundation/Application';
 
 export class EventListCommand extends Command {
   signature = 'event:list [--event=]';
-  description = 'List the application\'s events and listeners';
+  description = "List the application's events and listeners";
 
   constructor(protected app: Application) {
     super();
@@ -40,10 +40,7 @@ export class EventListCommand extends Command {
           rows.push([event, 'No listeners']);
         } else {
           listenerList.forEach((listener: any, index: number) => {
-            rows.push([
-              index === 0 ? event : '',
-              this.formatListener(listener)
-            ]);
+            rows.push([index === 0 ? event : '', this.formatListener(listener)]);
           });
         }
 
@@ -68,19 +65,11 @@ export class EventListCommand extends Command {
       this.newLine();
 
       // Display results in a formatted table
-      const maxEventLength = Math.max(
-        ...rows.map(row => row[0].length),
-        'Event'.length
-      );
-      const maxListenerLength = Math.max(
-        ...rows.map(row => row[1].length),
-        'Listeners'.length
-      );
+      const maxEventLength = Math.max(...rows.map((row) => row[0].length), 'Event'.length);
+      const maxListenerLength = Math.max(...rows.map((row) => row[1].length), 'Listeners'.length);
 
       // Header
-      this.line(
-        `${'Event'.padEnd(maxEventLength + 2)} ${'Listeners'.padEnd(maxListenerLength)}`
-      );
+      this.line(`${'Event'.padEnd(maxEventLength + 2)} ${'Listeners'.padEnd(maxListenerLength)}`);
       this.line('-'.repeat(maxEventLength + maxListenerLength + 3));
 
       // Rows
@@ -88,9 +77,7 @@ export class EventListCommand extends Command {
         if (event === '' && listener === '') {
           this.line('');
         } else {
-          this.line(
-            `${event.padEnd(maxEventLength + 2)} ${listener}`
-          );
+          this.line(`${event.padEnd(maxEventLength + 2)} ${listener}`);
         }
       }
 

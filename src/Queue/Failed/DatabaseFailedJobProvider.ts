@@ -31,12 +31,7 @@ export class DatabaseFailedJobProvider implements FailedJobProvider {
     return db.connection(this.databaseConnection);
   }
 
-  async log(
-    connection: string,
-    queue: string,
-    payload: string,
-    exception: Error
-  ): Promise<string> {
+  async log(connection: string, queue: string, payload: string, exception: Error): Promise<string> {
     const uuid = randomUUID();
     const conn = this.getConnection();
 
@@ -54,29 +49,21 @@ export class DatabaseFailedJobProvider implements FailedJobProvider {
 
   async all(): Promise<FailedJobRecord[]> {
     const conn = this.getConnection();
-    const results = await conn.table(this.table)
-      .orderBy('id', 'desc')
-      .get();
+    const results = await conn.table(this.table).orderBy('id', 'desc').get();
 
     return results as FailedJobRecord[];
   }
 
   async find(id: string | number): Promise<FailedJobRecord | null> {
     const conn = this.getConnection();
-    const result = await conn.table(this.table)
-      .where('id', '=', id)
-      .orWhere('uuid', '=', String(id))
-      .first();
+    const result = await conn.table(this.table).where('id', '=', id).orWhere('uuid', '=', String(id)).first();
 
     return (result as FailedJobRecord) || null;
   }
 
   async forget(id: string | number): Promise<boolean> {
     const conn = this.getConnection();
-    const deleted = await conn.table(this.table)
-      .where('id', '=', id)
-      .orWhere('uuid', '=', String(id))
-      .delete();
+    const deleted = await conn.table(this.table).where('id', '=', id).orWhere('uuid', '=', String(id)).delete();
 
     return deleted > 0;
   }
@@ -86,9 +73,7 @@ export class DatabaseFailedJobProvider implements FailedJobProvider {
 
     if (hours !== undefined && hours > 0) {
       const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
-      await conn.table(this.table)
-        .where('failed_at', '<=', cutoff)
-        .delete();
+      await conn.table(this.table).where('failed_at', '<=', cutoff).delete();
     } else {
       await conn.table(this.table).delete();
     }
@@ -113,9 +98,7 @@ export class DatabaseFailedJobProvider implements FailedJobProvider {
    * Format an exception for storage
    */
   protected formatException(exception: Error): string {
-    const lines: string[] = [
-      `${exception.constructor.name}: ${exception.message}`,
-    ];
+    const lines: string[] = [`${exception.constructor.name}: ${exception.message}`];
 
     if (exception.stack) {
       lines.push('', exception.stack);

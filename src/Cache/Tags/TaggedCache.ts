@@ -29,25 +29,25 @@ export class TaggedCache {
     protected tags: TagSet
   ) {}
 
-  async get(key: string): Promise<any> {
+  async get<T = any>(key: string): Promise<T | null> {
     const taggedKey = await this.taggedItemKey(key);
-    return this.store.get(taggedKey);
+    return this.store.get<T>(taggedKey);
   }
 
-  async many(keys: string[]): Promise<Record<string, any>> {
-    const result: Record<string, any> = {};
+  async many<T = any>(keys: string[]): Promise<Record<string, T | null>> {
+    const result: Record<string, T | null> = {};
     for (const key of keys) {
-      result[key] = await this.get(key);
+      result[key] = await this.get<T>(key);
     }
     return result;
   }
 
-  async put(key: string, value: any, seconds: number): Promise<boolean> {
+  async put<T = any>(key: string, value: T, seconds: number): Promise<boolean> {
     const taggedKey = await this.taggedItemKey(key);
-    return this.store.put(taggedKey, value, seconds);
+    return this.store.put<T>(taggedKey, value, seconds);
   }
 
-  async putMany(values: Record<string, any>, seconds: number): Promise<boolean> {
+  async putMany<T = any>(values: Record<string, T>, seconds: number): Promise<boolean> {
     let success = true;
     for (const [key, value] of Object.entries(values)) {
       if (!(await this.put(key, value, seconds))) {
@@ -67,9 +67,9 @@ export class TaggedCache {
     return this.store.decrement(taggedKey, value);
   }
 
-  async forever(key: string, value: any): Promise<boolean> {
+  async forever<T = any>(key: string, value: T): Promise<boolean> {
     const taggedKey = await this.taggedItemKey(key);
-    return this.store.forever(taggedKey, value);
+    return this.store.forever<T>(taggedKey, value);
   }
 
   async forget(key: string): Promise<boolean> {
@@ -91,7 +91,7 @@ export class TaggedCache {
     return value !== null;
   }
 
-  async pull(key: string, defaultValue?: any): Promise<any> {
+  async pull<T = any>(key: string, defaultValue?: T): Promise<T | null> {
     const value = await this.get(key);
     if (value !== null) {
       await this.forget(key);
@@ -100,7 +100,7 @@ export class TaggedCache {
     return defaultValue ?? null;
   }
 
-  async remember(key: string, ttl: number, callback: () => any | Promise<any>): Promise<any> {
+  async remember<T = any>(key: string, ttl: number, callback: () => T | Promise<T>): Promise<T> {
     const value = await this.get(key);
 
     if (value !== null) {
@@ -112,7 +112,7 @@ export class TaggedCache {
     return result;
   }
 
-  async rememberForever(key: string, callback: () => any | Promise<any>): Promise<any> {
+  async rememberForever<T = any>(key: string, callback: () => T | Promise<T>): Promise<T> {
     const value = await this.get(key);
 
     if (value !== null) {

@@ -16,6 +16,7 @@
  * }
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ShouldDispatchAfterCommit {
   // Marker interface - no methods required
 }

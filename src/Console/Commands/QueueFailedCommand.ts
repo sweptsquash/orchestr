@@ -45,14 +45,7 @@ export class QueueFailedCommand extends Command {
         // Invalid payload
       }
 
-      return [
-        String(job.id),
-        job.uuid.substring(0, 8) + '...',
-        job.connection,
-        job.queue,
-        jobName,
-        job.failed_at,
-      ];
+      return [String(job.id), job.uuid.substring(0, 8) + '...', job.connection, job.queue, jobName, job.failed_at];
     });
 
     // Simple table output
@@ -62,8 +55,7 @@ export class QueueFailedCommand extends Command {
     });
 
     const separator = colWidths.map((w) => '-'.repeat(w + 2)).join('+');
-    const formatRow = (row: string[]) =>
-      row.map((cell, i) => ` ${String(cell).padEnd(colWidths[i])} `).join('|');
+    const formatRow = (row: string[]) => row.map((cell, i) => ` ${String(cell).padEnd(colWidths[i])} `).join('|');
 
     this.line(separator);
     this.line(formatRow(headers));

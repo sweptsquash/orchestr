@@ -10,22 +10,22 @@ export interface Store {
   /**
    * Retrieve an item from the cache by key
    */
-  get(key: string): Promise<any>;
+  get<T = any>(key: string): Promise<T | null>;
 
   /**
    * Retrieve multiple items from the cache by key
    */
-  many(keys: string[]): Promise<Record<string, any>>;
+  many<T = any>(keys: string[]): Promise<Record<string, T | null>>;
 
   /**
    * Store an item in the cache for a given number of seconds
    */
-  put(key: string, value: any, seconds: number): Promise<boolean>;
+  put<T = any>(key: string, value: T, seconds: number): Promise<boolean>;
 
   /**
    * Store multiple items in the cache for a given number of seconds
    */
-  putMany(values: Record<string, any>, seconds: number): Promise<boolean>;
+  putMany<T = any>(values: Record<string, T>, seconds: number): Promise<boolean>;
 
   /**
    * Increment the value of an item in the cache
@@ -40,7 +40,7 @@ export interface Store {
   /**
    * Store an item in the cache indefinitely
    */
-  forever(key: string, value: any): Promise<boolean>;
+  forever<T = any>(key: string, value: T): Promise<boolean>;
 
   /**
    * Remove an item from the cache

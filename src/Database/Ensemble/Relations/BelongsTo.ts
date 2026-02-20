@@ -199,7 +199,7 @@ export class BelongsTo<TRelated extends Ensemble, TParent extends Ensemble> exte
    * Execute the query as a "select" statement
    * Override base to return single model instead of array
    */
-  // @ts-ignore - BelongsTo returns single model, not array
+  // @ts-expect-error - BelongsTo returns single model, not array
   async get(): Promise<TRelated | null> {
     return this.getResults();
   }

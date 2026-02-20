@@ -456,7 +456,7 @@ export abstract class Ensemble extends HasRelationshipsMixin {
    */
   async save(): Promise<boolean> {
     // Fire saving event
-    if (await this.fireModelEvent('saving') === false) {
+    if ((await this.fireModelEvent('saving')) === false) {
       return false;
     }
 
@@ -472,7 +472,7 @@ export abstract class Ensemble extends HasRelationshipsMixin {
    */
   protected async performInsert(): Promise<boolean> {
     // Fire creating event
-    if (await this.fireModelEvent('creating') === false) {
+    if ((await this.fireModelEvent('creating')) === false) {
       return false;
     }
 
@@ -515,7 +515,7 @@ export abstract class Ensemble extends HasRelationshipsMixin {
     }
 
     // Fire updating event
-    if (await this.fireModelEvent('updating') === false) {
+    if ((await this.fireModelEvent('updating')) === false) {
       return false;
     }
 
@@ -648,7 +648,7 @@ export abstract class Ensemble extends HasRelationshipsMixin {
     }
 
     // Fire deleting event
-    if (await this.fireModelEvent('deleting') === false) {
+    if ((await this.fireModelEvent('deleting')) === false) {
       return false;
     }
 

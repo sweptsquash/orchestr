@@ -12,12 +12,7 @@ export class View {
   protected viewData: Record<string, any>;
   protected engine: ViewEngine;
 
-  constructor(
-    engine: ViewEngine,
-    name: string,
-    path: string,
-    data: Record<string, any> = {}
-  ) {
+  constructor(engine: ViewEngine, name: string, path: string, data: Record<string, any> = {}) {
     this.engine = engine;
     this.viewName = name;
     this.viewPath = path;

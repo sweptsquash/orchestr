@@ -32,11 +32,7 @@ export class Worker {
   /**
    * Run the worker daemon loop
    */
-  async daemon(
-    connectionName: string,
-    queues: string,
-    options: WorkerOptions = {}
-  ): Promise<void> {
+  async daemon(connectionName: string, queues: string, options: WorkerOptions = {}): Promise<void> {
     const opts = { ...DEFAULT_WORKER_OPTIONS, ...options };
     this.startTime = Date.now();
 
@@ -53,11 +49,7 @@ export class Worker {
       }
 
       // Process the next job from the queue(s)
-      const processed = await this.runNextJob(
-        connectionName,
-        queues,
-        opts
-      );
+      const processed = await this.runNextJob(connectionName, queues, opts);
 
       if (!processed) {
         // No job was available
@@ -83,11 +75,7 @@ export class Worker {
   /**
    * Process a single job (--once mode)
    */
-  async runOnce(
-    connectionName: string,
-    queues: string,
-    options: WorkerOptions = {}
-  ): Promise<boolean> {
+  async runOnce(connectionName: string, queues: string, options: WorkerOptions = {}): Promise<boolean> {
     const opts = { ...DEFAULT_WORKER_OPTIONS, ...options };
     return this.runNextJob(connectionName, queues, opts);
   }
@@ -95,11 +83,7 @@ export class Worker {
   /**
    * Get the next job and process it
    */
-  async runNextJob(
-    connectionName: string,
-    queues: string,
-    options: Required<WorkerOptions>
-  ): Promise<boolean> {
+  async runNextJob(connectionName: string, queues: string, options: Required<WorkerOptions>): Promise<boolean> {
     const driver = this.manager.connection(connectionName);
     const queueList = queues.split(',').map((q) => q.trim());
 
@@ -188,27 +172,15 @@ export class Worker {
 
       // Fire after callbacks
       this.manager.fireAfterCallbacks(connectionName, job);
-
     } catch (error) {
-      await this.handleJobException(
-        connectionName,
-        driver,
-        rawJob,
-        job,
-        payload,
-        maxTries,
-        error as Error
-      );
+      await this.handleJobException(connectionName, driver, rawJob, job, payload, maxTries, error as Error);
     }
   }
 
   /**
    * Run a job through its middleware pipeline then execute it
    */
-  protected async runJobWithMiddleware(
-    job: Job,
-    options: Required<WorkerOptions>
-  ): Promise<void> {
+  protected async runJobWithMiddleware(job: Job, options: Required<WorkerOptions>): Promise<void> {
     const middleware: JobMiddleware[] = job.middleware?.() || [];
     const timeout = job.timeout ?? options.timeout;
 
@@ -228,12 +200,9 @@ export class Worker {
     middleware: JobMiddleware[],
     destination: () => Promise<void>
   ): () => Promise<void> {
-    return middleware.reduceRight(
-      (next: () => Promise<void>, mw: JobMiddleware) => {
-        return () => mw.handle(middleware[0] as any, next);
-      },
-      destination
-    );
+    return middleware.reduceRight((next: () => Promise<void>, mw: JobMiddleware) => {
+      return () => mw.handle(middleware[0] as any, next);
+    }, destination);
   }
 
   /**
@@ -251,9 +220,11 @@ export class Worker {
       job.handle(),
       new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(new Error(
-            `Job [${job.displayName()}] has been attempted too long or run too long. The job may have previously timed out.`
-          ));
+          reject(
+            new Error(
+              `Job [${job.displayName()}] has been attempted too long or run too long. The job may have previously timed out.`
+            )
+          );
         }, timeoutMs);
       }),
     ]);
@@ -292,7 +263,7 @@ export class Worker {
 
     console.error(
       `[Queue] Job [${job.displayName()}] failed (attempt ${rawJob.attempts}/${maxTries || 'unlimited'}). ` +
-      `Retrying in ${backoffDelay}s. Error: ${error.message}`
+        `Retrying in ${backoffDelay}s. Error: ${error.message}`
     );
   }
 
@@ -323,20 +294,14 @@ export class Worker {
     try {
       const failedProvider = this.getFailedJobProvider();
       if (failedProvider) {
-        await failedProvider.log(
-          connectionName,
-          rawJob.queue,
-          rawJob.payload,
-          error
-        );
+        await failedProvider.log(connectionName, rawJob.queue, rawJob.payload, error);
       }
     } catch (storeError) {
       console.error(`[Queue] Failed to store failed job:`, storeError);
     }
 
     console.error(
-      `[Queue] Job [${job.displayName()}] has failed after ${rawJob.attempts} attempt(s). ` +
-      `Error: ${error.message}`
+      `[Queue] Job [${job.displayName()}] has failed after ${rawJob.attempts} attempt(s). ` + `Error: ${error.message}`
     );
   }
 

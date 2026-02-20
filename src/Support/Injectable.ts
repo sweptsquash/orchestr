@@ -18,6 +18,7 @@
  * ```
  */
 export function Injectable(): ClassDecorator {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   return (target: Function) => {
     // This decorator is intentionally empty.
     // Its sole purpose is to trigger TypeScript's emitDecoratorMetadata

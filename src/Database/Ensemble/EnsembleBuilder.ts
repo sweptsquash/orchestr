@@ -284,7 +284,7 @@ export class EnsembleBuilder<T extends Ensemble> extends QueryBuilder<T> {
   async chunk(count: number, callback: (models: T[]) => Promise<boolean | void>): Promise<void> {
     let page = 1;
 
-    do {
+    while (true) {
       const results = await this.clone()
         .offset((page - 1) * count)
         .limit(count)
@@ -300,7 +300,7 @@ export class EnsembleBuilder<T extends Ensemble> extends QueryBuilder<T> {
       }
 
       page++;
-    } while (true);
+    }
   }
 
   /**

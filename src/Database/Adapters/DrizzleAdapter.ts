@@ -43,7 +43,7 @@ export class DrizzleAdapter implements DatabaseAdapter {
 
       this.connected = true;
     } catch (error: any) {
-      throw new Error(`Failed to connect to database: ${error?.message || error}`);
+      throw new Error(`Failed to connect to database: ${error?.message || error}`, { cause: error });
     }
   }
 
@@ -147,10 +147,11 @@ export class DrizzleAdapter implements DatabaseAdapter {
           result = await client.unsafe(boundSql);
           break;
         case 'mysql':
-        case 'mysql2':
+        case 'mysql2': {
           const [rows] = await client.execute(boundSql);
           result = rows;
           break;
+        }
         case 'better-sqlite3':
         case 'sqlite':
           result = client.prepare(boundSql).all();
@@ -164,7 +165,7 @@ export class DrizzleAdapter implements DatabaseAdapter {
         rowCount: Array.isArray(result) ? result.length : result.rowCount || 0,
       };
     } catch (error: any) {
-      throw new Error(`Query failed: ${error?.message || error}\nSQL: ${sql}`);
+      throw new Error(`Query failed: ${error?.message || error}\nSQL: ${sql}`, { cause: error });
     }
   }
 
@@ -208,7 +209,7 @@ export class DrizzleAdapter implements DatabaseAdapter {
       // Return the inserted ID
       return result.insertId || result.lastInsertRowid || result.rows?.[0]?.id;
     } catch (error: any) {
-      throw new Error(`Insert failed: ${error?.message || error}\nSQL: ${sql}`);
+      throw new Error(`Insert failed: ${error?.message || error}\nSQL: ${sql}`, { cause: error });
     }
   }
 

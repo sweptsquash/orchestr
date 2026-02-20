@@ -86,11 +86,7 @@ export class TemplateEngine implements ViewEngine {
   /**
    * Compile a child template that extends a layout.
    */
-  private async compileWithLayout(
-    childSource: string,
-    layoutName: string,
-    data: Record<string, any>
-  ): Promise<string> {
+  private async compileWithLayout(childSource: string, layoutName: string, data: Record<string, any>): Promise<string> {
     // Extract all @section ... @endsection blocks from the child
     const sections = this.extractSections(childSource);
 
@@ -199,11 +195,10 @@ export class TemplateEngine implements ViewEngine {
       if (source.startsWith('@if(', pos)) {
         nesting++;
         pos += 4;
-      } else if (source.startsWith('@endif', pos) && (nesting === 1)) {
+      } else if (source.startsWith('@endif', pos) && nesting === 1) {
         // Close the last segment
         segments.push({ condition: pendingCondition, body: source.slice(segmentStart, pos) });
         pos += 6;
-        nesting = 0;
         break;
       } else if (source.startsWith('@endif', pos)) {
         nesting--;
@@ -333,7 +328,7 @@ export class TemplateEngine implements ViewEngine {
   private evaluate(expr: string, data: Record<string, any>): any {
     const keys = Object.keys(data);
     const values = Object.values(data);
-    // eslint-disable-next-line no-new-func
+
     const fn = new Function(...keys, `return (${expr});`);
     return fn(...values);
   }

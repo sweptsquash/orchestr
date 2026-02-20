@@ -87,7 +87,7 @@ export class CacheManager {
     if (!factory) {
       throw new Error(
         `Cache driver [${storeConfig.driver}] not registered. ` +
-        `Available drivers: ${Array.from(this.driverFactories.keys()).join(', ')}`
+          `Available drivers: ${Array.from(this.driverFactories.keys()).join(', ')}`
       );
     }
 
@@ -171,12 +171,12 @@ export class CacheManager {
 
   // --- Proxy methods to default store for convenience ---
 
-  async get(key: string, defaultValue?: any): Promise<any> {
-    return this.store().get(key, defaultValue);
+  async get<T = any>(key: string, defaultValue?: T | (() => T)): Promise<T | null> {
+    return this.store().get<T>(key, defaultValue);
   }
 
-  async put(key: string, value: any, ttl?: number | Date): Promise<boolean> {
-    return this.store().put(key, value, ttl);
+  async put<T = any>(key: string, value: T, ttl?: number | Date): Promise<boolean> {
+    return this.store().put<T>(key, value, ttl);
   }
 
   async has(key: string): Promise<boolean> {
@@ -191,28 +191,28 @@ export class CacheManager {
     return this.store().flush();
   }
 
-  async remember(key: string, ttl: number | Date, callback: () => any | Promise<any>): Promise<any> {
-    return this.store().remember(key, ttl, callback);
+  async remember<T = any>(key: string, ttl: number | Date, callback: () => T | Promise<T>): Promise<T> {
+    return this.store().remember<T>(key, ttl, callback);
   }
 
-  async rememberForever(key: string, callback: () => any | Promise<any>): Promise<any> {
-    return this.store().rememberForever(key, callback);
+  async rememberForever<T = any>(key: string, callback: () => T | Promise<T>): Promise<T> {
+    return this.store().rememberForever<T>(key, callback);
   }
 
-  async forever(key: string, value: any): Promise<boolean> {
-    return this.store().forever(key, value);
+  async forever<T = any>(key: string, value: T): Promise<boolean> {
+    return this.store().forever<T>(key, value);
   }
 
-  async pull(key: string, defaultValue?: any): Promise<any> {
-    return this.store().pull(key, defaultValue);
+  async pull<T = any>(key: string, defaultValue?: T): Promise<T | null> {
+    return this.store().pull<T>(key, defaultValue);
   }
 
-  async many(keys: string[]): Promise<Record<string, any>> {
-    return this.store().many(keys);
+  async many<T = any>(keys: string[]): Promise<Record<string, T | null>> {
+    return this.store().many<T>(keys);
   }
 
-  async putMany(values: Record<string, any>, ttl?: number | Date): Promise<boolean> {
-    return this.store().putMany(values, ttl);
+  async putMany<T = any>(values: Record<string, T>, ttl?: number | Date): Promise<boolean> {
+    return this.store().putMany<T>(values, ttl);
   }
 
   async increment(key: string, value?: number): Promise<number | boolean> {
@@ -223,7 +223,7 @@ export class CacheManager {
     return this.store().decrement(key, value);
   }
 
-  async add(key: string, value: any, ttl?: number | Date): Promise<boolean> {
-    return this.store().add(key, value, ttl);
+  async add<T = any>(key: string, value: T, ttl?: number | Date): Promise<boolean> {
+    return this.store().add<T>(key, value, ttl);
   }
 }

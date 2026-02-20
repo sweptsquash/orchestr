@@ -46,7 +46,9 @@ export abstract class Lock implements LockContract {
    * Attempt to acquire the lock.
    * If a callback is provided, execute it and auto-release.
    */
-  async get(callback?: () => Promise<any> | any): Promise<boolean | any> {
+  async get(): Promise<boolean>;
+  async get<T = any>(callback: () => Promise<T> | T): Promise<T>;
+  async get<T = any>(callback?: () => Promise<T> | T): Promise<boolean | T> {
     const acquired = await this.acquire();
 
     if (!acquired) {
@@ -68,7 +70,9 @@ export abstract class Lock implements LockContract {
    * Block until the lock is acquired or timeout expires.
    * If a callback is provided, execute it and auto-release.
    */
-  async block(seconds: number, callback?: () => Promise<any> | any): Promise<boolean | any> {
+  async block(seconds: number): Promise<boolean>;
+  async block<T = any>(seconds: number, callback: () => Promise<T> | T): Promise<T>;
+  async block<T = any>(seconds: number, callback?: () => Promise<T> | T): Promise<boolean | T> {
     const startTime = Date.now();
     const timeoutMs = seconds * 1000;
 
@@ -87,9 +91,7 @@ export abstract class Lock implements LockContract {
       await this.sleep(250);
     }
 
-    throw new LockTimeoutException(
-      `Unable to acquire lock [${this.name}] within ${seconds} second(s).`
-    );
+    throw new LockTimeoutException(`Unable to acquire lock [${this.name}] within ${seconds} second(s).`);
   }
 
   /**

@@ -205,7 +205,14 @@ export {
 
 // Event Contracts & Types
 export type { DispatcherContract } from './Events/Contracts/Dispatcher';
-export type { EventListener, EventSubscriber, ListenerInterface, ListenerClosure, EventPayload, QueuedListener } from './Events/types';
+export type {
+  EventListener,
+  EventSubscriber,
+  ListenerInterface,
+  ListenerClosure,
+  EventPayload,
+  QueuedListener,
+} from './Events/types';
 
 // Queue
 export { Job } from './Queue/Job';

@@ -19,12 +19,7 @@ export interface FailedJobProvider {
   /**
    * Log a failed job
    */
-  log(
-    connection: string,
-    queue: string,
-    payload: string,
-    exception: Error
-  ): Promise<string | number>;
+  log(connection: string, queue: string, payload: string, exception: Error): Promise<string | number>;
 
   /**
    * Get a list of all failed jobs

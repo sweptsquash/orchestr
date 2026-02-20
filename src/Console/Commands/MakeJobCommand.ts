@@ -43,8 +43,7 @@ export class MakeJobCommand extends Command {
     const sync = options.sync === true || options.sync === 'true';
 
     // Generate file content
-    const content = (sync ? this.getSyncStub() : this.getStub())
-      .replace(/\{\{className\}\}/g, name);
+    const content = (sync ? this.getSyncStub() : this.getStub()).replace(/\{\{className\}\}/g, name);
 
     // Write file
     await fs.writeFile(filePath, content);

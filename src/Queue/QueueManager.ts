@@ -109,7 +109,9 @@ export class QueueManager {
     const factory = this.driverFactories.get(config.driver);
 
     if (!factory) {
-      throw new Error(`Queue driver [${config.driver}] not registered. Available drivers: ${Array.from(this.driverFactories.keys()).join(', ')}`);
+      throw new Error(
+        `Queue driver [${config.driver}] not registered. Available drivers: ${Array.from(this.driverFactories.keys()).join(', ')}`
+      );
     }
 
     const driver = factory(config);

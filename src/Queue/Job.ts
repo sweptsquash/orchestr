@@ -294,10 +294,7 @@ export abstract class Job implements QueueableJob {
   /**
    * Restore a job from serialized data
    */
-  static fromJSON<T extends Job>(
-    this: typeof Job & (new (...args: any[]) => T),
-    data: Record<string, any>
-  ): T {
+  static fromJSON<T extends Job>(this: typeof Job & (new (...args: any[]) => T), data: Record<string, any>): T {
     const instance = Object.create(this.prototype);
 
     for (const [key, value] of Object.entries(data)) {
@@ -359,7 +356,10 @@ export type JobClass<T extends Job = Job> = typeof Job & {
   dispatch(...args: any[]): import('./PendingDispatch').PendingDispatch;
   dispatchSync(...args: any[]): Promise<void>;
   dispatchIf(condition: boolean | (() => boolean), ...args: any[]): import('./PendingDispatch').PendingDispatch | null;
-  dispatchUnless(condition: boolean | (() => boolean), ...args: any[]): import('./PendingDispatch').PendingDispatch | null;
+  dispatchUnless(
+    condition: boolean | (() => boolean),
+    ...args: any[]
+  ): import('./PendingDispatch').PendingDispatch | null;
   dispatchAfterResponse(...args: any[]): void;
 };
 

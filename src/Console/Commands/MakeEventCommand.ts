@@ -39,8 +39,7 @@ export class MakeEventCommand extends Command {
     await fs.mkdir(eventsPath, { recursive: true });
 
     // Generate file content
-    const content = this.getStub()
-      .replace(/\{\{className\}\}/g, name);
+    const content = this.getStub().replace(/\{\{className\}\}/g, name);
 
     // Write file
     await fs.writeFile(filePath, content);

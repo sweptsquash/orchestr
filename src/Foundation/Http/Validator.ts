@@ -175,7 +175,7 @@ export class Validator {
         }
         return { passes: true, message: '' };
 
-      case 'min':
+      case 'min': {
         const minValue = params[0];
         if (typeof value === 'string' && value.length < parseInt(minValue)) {
           return {
@@ -190,8 +190,9 @@ export class Validator {
           };
         }
         return { passes: true, message: '' };
+      }
 
-      case 'max':
+      case 'max': {
         const maxValue = params[0];
         if (typeof value === 'string' && value.length > parseInt(maxValue)) {
           return {
@@ -206,8 +207,9 @@ export class Validator {
           };
         }
         return { passes: true, message: '' };
+      }
 
-      case 'between':
+      case 'between': {
         const [minBetween, maxBetween] = params;
         const numValue = typeof value === 'string' ? value.length : Number(value);
         if (numValue < parseFloat(minBetween) || numValue > parseFloat(maxBetween)) {
@@ -217,6 +219,7 @@ export class Validator {
           };
         }
         return { passes: true, message: '' };
+      }
 
       case 'in':
         if (value && !params.includes(String(value))) {
@@ -245,7 +248,7 @@ export class Validator {
         }
         return { passes: true, message: '' };
 
-      case 'confirmed':
+      case 'confirmed': {
         const confirmationField = `${field}_confirmation`;
         const confirmationValue = this.data[confirmationField];
         if (value !== confirmationValue) {
@@ -255,6 +258,7 @@ export class Validator {
           };
         }
         return { passes: true, message: '' };
+      }
 
       case 'url':
         if (value && !this.isValidUrl(value)) {
@@ -296,7 +300,7 @@ export class Validator {
         }
         return { passes: true, message: '' };
 
-      case 'regex':
+      case 'regex': {
         const pattern = new RegExp(params.join(':'));
         if (value && !pattern.test(value)) {
           return {
@@ -305,6 +309,7 @@ export class Validator {
           };
         }
         return { passes: true, message: '' };
+      }
 
       default:
         console.warn(`Unknown validation rule: ${rule}`);

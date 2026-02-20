@@ -23,5 +23,5 @@ export type {
   ListenerInterface,
   ListenerClosure,
   EventPayload,
-  QueuedListener
+  QueuedListener,
 } from './types';

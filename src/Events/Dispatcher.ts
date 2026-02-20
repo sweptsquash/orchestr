@@ -280,9 +280,7 @@ export class Dispatcher implements DispatcherContract {
   protected wildcardMatch(pattern: string, eventName: string): boolean {
     // Convert wildcard pattern to regex
     // Escape special regex characters except *
-    const regexPattern = pattern
-      .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-      .replace(/\*/g, '.*');
+    const regexPattern = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
 
     const regex = new RegExp(`^${regexPattern}$`);
     return regex.test(eventName);
@@ -295,10 +293,7 @@ export class Dispatcher implements DispatcherContract {
    * @param payload - Event payload
    * @returns Tuple of [eventName, eventInstance]
    */
-  protected parseEventAndPayload(
-    event: string | Event,
-    payload: any[]
-  ): [string, Event | null] {
+  protected parseEventAndPayload(event: string | Event, payload: any[]): [string, Event | null] {
     if (typeof event === 'string') {
       return [event, null];
     }
@@ -337,7 +332,7 @@ export class Dispatcher implements DispatcherContract {
    * @param wildcard - Whether this is for a wildcard listener
    * @returns Callable function
    */
-  protected makeListener(listener: EventListener, wildcard: boolean = false): Function {
+  protected makeListener(listener: EventListener, wildcard: boolean = false): (...args: any[]) => any {
     // If it's a string, resolve from container
     if (typeof listener === 'string') {
       return this.createClassListener(listener, wildcard);
@@ -378,7 +373,7 @@ export class Dispatcher implements DispatcherContract {
    * @param wildcard - Whether this is for a wildcard listener
    * @returns Callable function
    */
-  protected createClassListener(listener: string, wildcard: boolean = false): Function {
+  protected createClassListener(listener: string, wildcard: boolean = false): (...args: any[]) => any {
     return (event: Event, ...payload: any[]) => {
       // Resolve the listener class from the container
       const instance = this.container.make<ListenerInterface>(listener);

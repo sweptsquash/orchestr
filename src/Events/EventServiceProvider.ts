@@ -145,9 +145,7 @@ export abstract class EventServiceProvider extends ServiceProvider {
       const { EventDiscovery } = await import('../Support/EventDiscovery');
       const discovery = new EventDiscovery(this.app);
 
-      const listeners = await discovery.discover(
-        this.discoverEventsWithin()
-      );
+      const listeners = await discovery.discover(this.discoverEventsWithin());
 
       for (const [event, listenerClasses] of listeners) {
         for (const listener of listenerClasses) {

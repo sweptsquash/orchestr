@@ -22,27 +22,27 @@ export interface RepositoryContract extends Store {
   /**
    * Retrieve an item from the cache and delete it
    */
-  pull(key: string, defaultValue?: any): Promise<any>;
+  pull<T = any>(key: string, defaultValue?: T): Promise<T | null>;
 
   /**
    * Store an item in the cache if the key does not exist
    */
-  add(key: string, value: any, ttl?: number | Date): Promise<boolean>;
+  add<T = any>(key: string, value: T, ttl?: number | Date): Promise<boolean>;
 
   /**
    * Get an item from the cache, or execute the given closure and store the result
    */
-  remember(key: string, ttl: number | Date, callback: () => any | Promise<any>): Promise<any>;
+  remember<T = any>(key: string, ttl: number | Date, callback: () => T | Promise<T>): Promise<T>;
 
   /**
    * Get an item from the cache, or execute the given closure and store the result forever
    */
-  rememberForever(key: string, callback: () => any | Promise<any>): Promise<any>;
+  rememberForever<T = any>(key: string, callback: () => T | Promise<T>): Promise<T>;
 
   /**
    * Get an item from the cache using flexible stale-while-revalidate strategy
    */
-  flexible(key: string, ttl: [number, number], callback: () => any | Promise<any>): Promise<any>;
+  flexible<T = any>(key: string, ttl: [number, number], callback: () => T | Promise<T>): Promise<T>;
 
   /**
    * Get a lock instance

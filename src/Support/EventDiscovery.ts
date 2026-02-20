@@ -172,8 +172,8 @@ export class EventDiscovery {
     const module = await import(file);
 
     // Try to find the default export or named export
-    return module.default || Object.values(module).find(exp =>
-      typeof exp === 'function' && this.isListenerClass(exp)
+    return (
+      module.default || Object.values(module).find((exp) => typeof exp === 'function' && this.isListenerClass(exp))
     );
   }
 
@@ -191,8 +191,7 @@ export class EventDiscovery {
 
     // Must have a handle method or implement __invoke
     const prototype = cls.prototype;
-    return typeof prototype?.handle === 'function' ||
-           typeof prototype?.__invoke === 'function';
+    return typeof prototype?.handle === 'function' || typeof prototype?.__invoke === 'function';
   }
 
   /**
@@ -225,8 +224,9 @@ export class EventDiscovery {
     if (!handleMethod) return events;
 
     // Use reflect-metadata to get parameter types
-    const paramTypes = Reflect.getMetadata('design:paramtypes', listenerClass.prototype, 'handle') ||
-                       Reflect.getMetadata('design:paramtypes', listenerClass.prototype, '__invoke');
+    const paramTypes =
+      Reflect.getMetadata('design:paramtypes', listenerClass.prototype, 'handle') ||
+      Reflect.getMetadata('design:paramtypes', listenerClass.prototype, '__invoke');
 
     if (!paramTypes || paramTypes.length === 0) return events;
 

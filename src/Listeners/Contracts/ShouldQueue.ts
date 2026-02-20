@@ -153,13 +153,11 @@ export function isShouldQueue(listener: any): listener is ShouldQueue {
   return (
     listener !== null &&
     typeof listener === 'object' &&
-    (
-      'connection' in listener ||
+    ('connection' in listener ||
       'queue' in listener ||
       'tries' in listener ||
       typeof listener.viaConnection === 'function' ||
       typeof listener.viaQueue === 'function' ||
-      typeof listener.shouldQueue === 'function'
-    )
+      typeof listener.shouldQueue === 'function')
   );
 }

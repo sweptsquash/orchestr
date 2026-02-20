@@ -163,6 +163,7 @@ export abstract class HasRelationshipsMixin {
     localKey?: string
   ): import('../Relations/MorphOne').MorphOne<TRelated, any> {
     const instance = new related();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { MorphOne } = require('../Relations/MorphOne');
 
     const finalLocalKey = localKey || (this as any).getKeyName();
@@ -181,6 +182,7 @@ export abstract class HasRelationshipsMixin {
     localKey?: string
   ): import('../Relations/MorphMany').MorphMany<TRelated, any> {
     const instance = new related();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { MorphMany } = require('../Relations/MorphMany');
 
     const finalLocalKey = localKey || (this as any).getKeyName();
@@ -197,6 +199,7 @@ export abstract class HasRelationshipsMixin {
     id?: string,
     ownerKey?: string
   ): import('../Relations/MorphTo').MorphTo<any> {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { MorphTo } = require('../Relations/MorphTo');
 
     const finalType = type || `${name}_type`;
@@ -221,6 +224,7 @@ export abstract class HasRelationshipsMixin {
     inverse: boolean = false
   ): import('../Relations/MorphToMany').MorphToMany<TRelated, any> {
     const instance = new related();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { MorphToMany } = require('../Relations/MorphToMany');
 
     const finalTable = table || `${name}s`;
@@ -258,6 +262,7 @@ export abstract class HasRelationshipsMixin {
     relatedKey?: string
   ): import('../Relations/MorphedByMany').MorphedByMany<TRelated, any> {
     const instance = new related();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { MorphedByMany } = require('../Relations/MorphedByMany');
 
     const finalTable = table || `${name}s`;

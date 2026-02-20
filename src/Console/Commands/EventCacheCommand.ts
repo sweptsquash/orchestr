@@ -11,7 +11,7 @@ import * as path from 'path';
 
 export class EventCacheCommand extends Command {
   signature = 'event:cache';
-  description = 'Discover and cache the application\'s events and listeners';
+  description = "Discover and cache the application's events and listeners";
 
   constructor(protected app: Application) {
     super();
@@ -28,7 +28,7 @@ export class EventCacheCommand extends Command {
       const directories = this.app.getEventDiscoveryPaths();
 
       this.comment(`Scanning directories:`);
-      directories.forEach(dir => this.comment(`  - ${dir}`));
+      directories.forEach((dir) => this.comment(`  - ${dir}`));
       this.newLine();
 
       const listeners = await discovery.discover(directories);
@@ -46,10 +46,7 @@ export class EventCacheCommand extends Command {
       await fs.mkdir(path.dirname(cachePath), { recursive: true });
 
       // Write cache file
-      await fs.writeFile(
-        cachePath,
-        JSON.stringify(listenersArray, null, 2)
-      );
+      await fs.writeFile(cachePath, JSON.stringify(listenersArray, null, 2));
 
       this.info(`Events cached successfully!`);
       this.newLine();

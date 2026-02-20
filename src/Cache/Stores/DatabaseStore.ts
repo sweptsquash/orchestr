@@ -39,14 +39,12 @@ export class DatabaseStore implements Store {
     return db.connection(this.connectionName);
   }
 
-  async get(key: string): Promise<any> {
+  async get<T = any>(key: string): Promise<T | null> {
     const prefixed = this.prefixedKey(key);
     const conn = this.getConnection();
     const now = this.currentTime();
 
-    const row = await conn.table(this.tableName)
-      .where('key', '=', prefixed)
-      .first();
+    const row = await conn.table(this.tableName).where('key', '=', prefixed).first();
 
     if (!row) return null;
 
@@ -59,15 +57,15 @@ export class DatabaseStore implements Store {
     return this.unserialize(row.value);
   }
 
-  async many(keys: string[]): Promise<Record<string, any>> {
-    const result: Record<string, any> = {};
+  async many<T = any>(keys: string[]): Promise<Record<string, T | null>> {
+    const result: Record<string, T | null> = {};
     for (const key of keys) {
       result[key] = await this.get(key);
     }
     return result;
   }
 
-  async put(key: string, value: any, seconds: number): Promise<boolean> {
+  async put<T = any>(key: string, value: T, seconds: number): Promise<boolean> {
     const prefixed = this.prefixedKey(key);
     const serialized = this.serialize(value);
     const expiration = seconds > 0 ? this.currentTime() + seconds : 0;
@@ -75,17 +73,12 @@ export class DatabaseStore implements Store {
 
     try {
       // Try update first
-      const existing = await conn.table(this.tableName)
-        .where('key', '=', prefixed)
-        .first();
+      const existing = await conn.table(this.tableName).where('key', '=', prefixed).first();
 
       if (existing) {
-        await conn.table(this.tableName)
-          .where('key', '=', prefixed)
-          .update({ value: serialized, expiration });
+        await conn.table(this.tableName).where('key', '=', prefixed).update({ value: serialized, expiration });
       } else {
-        await conn.table(this.tableName)
-          .insert({ key: prefixed, value: serialized, expiration });
+        await conn.table(this.tableName).insert({ key: prefixed, value: serialized, expiration });
       }
 
       return true;
@@ -94,7 +87,7 @@ export class DatabaseStore implements Store {
     }
   }
 
-  async putMany(values: Record<string, any>, seconds: number): Promise<boolean> {
+  async putMany<T = any>(values: Record<string, T>, seconds: number): Promise<boolean> {
     let success = true;
     for (const [key, value] of Object.entries(values)) {
       if (!(await this.put(key, value, seconds))) {
@@ -111,17 +104,15 @@ export class DatabaseStore implements Store {
     const prefixed = this.prefixedKey(key);
     const conn = this.getConnection();
 
-    const existing = await conn.table(this.tableName)
-      .where('key', '=', prefixed)
-      .first();
+    const existing = await conn.table(this.tableName).where('key', '=', prefixed).first();
 
     if (existing) {
-      await conn.table(this.tableName)
+      await conn
+        .table(this.tableName)
         .where('key', '=', prefixed)
         .update({ value: this.serialize(newValue) });
     } else {
-      await conn.table(this.tableName)
-        .insert({ key: prefixed, value: this.serialize(newValue), expiration: 0 });
+      await conn.table(this.tableName).insert({ key: prefixed, value: this.serialize(newValue), expiration: 0 });
     }
 
     return newValue;
@@ -131,7 +122,7 @@ export class DatabaseStore implements Store {
     return this.increment(key, -value);
   }
 
-  async forever(key: string, value: any): Promise<boolean> {
+  async forever<T = any>(key: string, value: T): Promise<boolean> {
     return this.put(key, value, 0);
   }
 
@@ -140,9 +131,7 @@ export class DatabaseStore implements Store {
     const conn = this.getConnection();
 
     try {
-      await conn.table(this.tableName)
-        .where('key', '=', prefixed)
-        .delete();
+      await conn.table(this.tableName).where('key', '=', prefixed).delete();
       return true;
     } catch {
       return false;

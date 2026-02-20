@@ -53,7 +53,7 @@ export class MakeListenerCommand extends Command {
 
     if (event) {
       this.newLine();
-      this.comment('Don\'t forget to register this listener in your EventServiceProvider:');
+      this.comment("Don't forget to register this listener in your EventServiceProvider:");
       this.comment(`  protected listen = {`);
       this.comment(`    ${event}: '${name}',`);
       this.comment(`  }`);

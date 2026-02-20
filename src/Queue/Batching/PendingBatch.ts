@@ -115,17 +115,12 @@ export class PendingBatch {
     }
 
     // Create batch instance
-    const batch = new Batch(
-      manager,
-      this._name,
-      this.jobs.length,
-      {
-        thenCallbacks: this._thenCallbacks,
-        catchCallbacks: this._catchCallbacks,
-        finallyCallbacks: this._finallyCallbacks,
-        allowFailures: this._allowFailures,
-      }
-    );
+    const batch = new Batch(manager, this._name, this.jobs.length, {
+      thenCallbacks: this._thenCallbacks,
+      catchCallbacks: this._catchCallbacks,
+      finallyCallbacks: this._finallyCallbacks,
+      allowFailures: this._allowFailures,
+    });
 
     // Dispatch all jobs with batch metadata
     for (const job of this.jobs) {

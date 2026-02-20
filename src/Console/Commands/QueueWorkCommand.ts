@@ -26,7 +26,9 @@ export class QueueWorkCommand extends Command {
     const queues = (options.queue as string) || 'default';
     const once = options.once === true || options.once === 'true';
 
-    this.info(`[${new Date().toISOString()}] Processing jobs from the [${queues}] queue(s) on [${connection}] connection.`);
+    this.info(
+      `[${new Date().toISOString()}] Processing jobs from the [${queues}] queue(s) on [${connection}] connection.`
+    );
 
     const workerOptions = {
       name: (options.name as string) || 'default',

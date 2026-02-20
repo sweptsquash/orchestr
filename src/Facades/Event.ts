@@ -67,9 +67,7 @@ class EventFacadeClass extends Facade {
 
     if (events && events.length > 0) {
       // Create selective fake that only intercepts specified events
-      const eventNames = events.map(e =>
-        typeof e === 'string' ? e : e.name
-      );
+      const eventNames = events.map((e) => (typeof e === 'string' ? e : e.name));
       fake.setFakedEvents(eventNames);
 
       // Store original dispatcher for pass-through
@@ -108,9 +106,7 @@ class EventFacadeClass extends Facade {
     const app = this.getFacadeApplication();
     const fake = new EventFake(app);
 
-    const eventNames = events.map(e =>
-      typeof e === 'string' ? e : e.name
-    );
+    const eventNames = events.map((e) => (typeof e === 'string' ? e : e.name));
     fake.setExceptedEvents(eventNames);
 
     // Store original dispatcher for pass-through
@@ -149,9 +145,7 @@ class EventFacadeClass extends Facade {
    * expect(result).toBe('done');
    * ```
    */
-  static async fakeFor<T>(
-    callback: (fake: EventFake) => T | Promise<T>
-  ): Promise<[T, EventFake]> {
+  static async fakeFor<T>(callback: (fake: EventFake) => T | Promise<T>): Promise<[T, EventFake]> {
     const app = this.getFacadeApplication();
 
     // Store the original binding
@@ -247,10 +241,7 @@ class EventFacadeClass extends Facade {
    * Event.assertDispatchedTimes(UserRegistered, 3);
    * ```
    */
-  static assertDispatchedTimes(
-    event: string | (new (...args: any[]) => EventClass),
-    times: number
-  ): void {
+  static assertDispatchedTimes(event: string | (new (...args: any[]) => EventClass), times: number): void {
     const fake = this.getFakeInstance();
     fake.assertDispatchedTimes(event, times);
   }
@@ -305,9 +296,7 @@ class EventFacadeClass extends Facade {
     const instance = app.make<EventFake>('events');
 
     if (!(instance instanceof EventFake)) {
-      throw new Error(
-        'Event facade is not faked. Call Event.fake() before making assertions.'
-      );
+      throw new Error('Event facade is not faked. Call Event.fake() before making assertions.');
     }
 
     return instance;

@@ -277,31 +277,24 @@ export class EventFake implements DispatcherContract {
    * });
    * ```
    */
-  assertDispatched(
-    event: string | (new (...args: any[]) => Event),
-    callback?: (event: Event) => boolean
-  ): void {
+  assertDispatched(event: string | (new (...args: any[]) => Event), callback?: (event: Event) => boolean): void {
     const eventName = typeof event === 'string' ? event : event.name;
     const events = this.dispatched.get(eventName) || [];
 
     if (events.length === 0) {
       const dispatchedList = Array.from(this.dispatched.keys()).join(', ') || 'none';
-      throw new Error(
-        `Event [${eventName}] was not dispatched.\n` +
-        `Dispatched events: ${dispatchedList}`
-      );
+      throw new Error(`Event [${eventName}] was not dispatched.\n` + `Dispatched events: ${dispatchedList}`);
     }
 
     if (callback) {
-      const matching = events.filter(e => {
+      const matching = events.filter((e) => {
         const eventObj = typeof e.event === 'string' ? null : e.event;
         return eventObj && callback(eventObj);
       });
 
       if (matching.length === 0) {
         throw new Error(
-          `Event [${eventName}] was dispatched ${events.length} time(s) ` +
-          `but none matched the provided callback.`
+          `Event [${eventName}] was dispatched ${events.length} time(s) ` + `but none matched the provided callback.`
         );
       }
     }
@@ -325,23 +318,18 @@ export class EventFake implements DispatcherContract {
    * });
    * ```
    */
-  assertNotDispatched(
-    event: string | (new (...args: any[]) => Event),
-    callback?: (event: Event) => boolean
-  ): void {
+  assertNotDispatched(event: string | (new (...args: any[]) => Event), callback?: (event: Event) => boolean): void {
     const eventName = typeof event === 'string' ? event : event.name;
     const events = this.dispatched.get(eventName) || [];
 
     if (!callback) {
       if (events.length > 0) {
-        throw new Error(
-          `Event [${eventName}] was dispatched ${events.length} time(s).`
-        );
+        throw new Error(`Event [${eventName}] was dispatched ${events.length} time(s).`);
       }
       return;
     }
 
-    const matching = events.filter(e => {
+    const matching = events.filter((e) => {
       const eventObj = typeof e.event === 'string' ? null : e.event;
       return eventObj && callback(eventObj);
     });
@@ -349,7 +337,7 @@ export class EventFake implements DispatcherContract {
     if (matching.length > 0) {
       throw new Error(
         `Event [${eventName}] was unexpectedly dispatched ${matching.length} time(s) ` +
-        `matching the provided callback.`
+          `matching the provided callback.`
       );
     }
   }
@@ -366,17 +354,12 @@ export class EventFake implements DispatcherContract {
    * fake.assertDispatchedTimes(UserRegistered, 3);
    * ```
    */
-  assertDispatchedTimes(
-    event: string | (new (...args: any[]) => Event),
-    times: number
-  ): void {
+  assertDispatchedTimes(event: string | (new (...args: any[]) => Event), times: number): void {
     const eventName = typeof event === 'string' ? event : event.name;
     const events = this.dispatched.get(eventName) || [];
 
     if (events.length !== times) {
-      throw new Error(
-        `Event [${eventName}] was dispatched ${events.length} time(s) instead of ${times}.`
-      );
+      throw new Error(`Event [${eventName}] was dispatched ${events.length} time(s) instead of ${times}.`);
     }
   }
 
@@ -391,17 +374,14 @@ export class EventFake implements DispatcherContract {
    * ```
    */
   assertNothingDispatched(): void {
-    const totalEvents = Array.from(this.dispatched.values())
-      .reduce((sum, events) => sum + events.length, 0);
+    const totalEvents = Array.from(this.dispatched.values()).reduce((sum, events) => sum + events.length, 0);
 
     if (totalEvents > 0) {
       const dispatched = Array.from(this.dispatched.entries())
         .map(([name, events]) => `  ${name}: ${events.length}`)
         .join('\n');
 
-      throw new Error(
-        `Expected no events to be dispatched, but ${totalEvents} were:\n${dispatched}`
-      );
+      throw new Error(`Expected no events to be dispatched, but ${totalEvents} were:\n${dispatched}`);
     }
   }
 
@@ -421,30 +401,23 @@ export class EventFake implements DispatcherContract {
    * fake.assertListening(UserRegistered, SendWelcomeEmail);
    * ```
    */
-  assertListening(
-    event: string | (new (...args: any[]) => Event),
-    listener?: string | EventListener
-  ): void {
+  assertListening(event: string | (new (...args: any[]) => Event), listener?: string | EventListener): void {
     const eventName = typeof event === 'string' ? event : event.name;
     const eventListeners = this.listeners.get(eventName) || [];
 
     if (eventListeners.length === 0) {
-      throw new Error(
-        `No listeners are registered for event [${eventName}].`
-      );
+      throw new Error(`No listeners are registered for event [${eventName}].`);
     }
 
     if (listener) {
       const listenerName = typeof listener === 'string' ? listener : this.getListenerName(listener);
-      const hasListener = eventListeners.some(l => {
+      const hasListener = eventListeners.some((l) => {
         const lName = typeof l === 'string' ? l : this.getListenerName(l);
         return lName === listenerName;
       });
 
       if (!hasListener) {
-        throw new Error(
-          `Listener [${listenerName}] is not registered for event [${eventName}].`
-        );
+        throw new Error(`Listener [${listenerName}] is not registered for event [${eventName}].`);
       }
     }
   }
@@ -505,8 +478,7 @@ export class EventFake implements DispatcherContract {
    * @returns Total number of event dispatches
    */
   getDispatchedCount(): number {
-    return Array.from(this.dispatched.values())
-      .reduce((sum, events) => sum + events.length, 0);
+    return Array.from(this.dispatched.values()).reduce((sum, events) => sum + events.length, 0);
   }
 
   /**

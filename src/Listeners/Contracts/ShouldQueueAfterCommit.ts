@@ -20,6 +20,7 @@ import type { ShouldQueue } from './ShouldQueue';
  * }
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ShouldQueueAfterCommit extends ShouldQueue {
   // Marker interface - inherits all ShouldQueue properties
 }

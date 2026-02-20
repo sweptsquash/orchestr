@@ -32,7 +32,7 @@ export class ArrayStore implements Store {
     this.shouldSerialize = config.serialize !== false;
   }
 
-  async get(key: string): Promise<any> {
+  async get<T = any>(key: string): Promise<T | null> {
     const prefixed = this.prefixedKey(key);
     const entry = this.storage.get(prefixed);
 
@@ -46,15 +46,15 @@ export class ArrayStore implements Store {
     return this.shouldSerialize ? this.unserialize(entry.value) : entry.value;
   }
 
-  async many(keys: string[]): Promise<Record<string, any>> {
-    const result: Record<string, any> = {};
+  async many<T = any>(keys: string[]): Promise<Record<string, T | null>> {
+    const result: Record<string, T | null> = {};
     for (const key of keys) {
       result[key] = await this.get(key);
     }
     return result;
   }
 
-  async put(key: string, value: any, seconds: number): Promise<boolean> {
+  async put<T = any>(key: string, value: T, seconds: number): Promise<boolean> {
     const prefixed = this.prefixedKey(key);
     const stored = this.shouldSerialize ? this.serialize(value) : value;
 
@@ -66,7 +66,7 @@ export class ArrayStore implements Store {
     return true;
   }
 
-  async putMany(values: Record<string, any>, seconds: number): Promise<boolean> {
+  async putMany<T = any>(values: Record<string, T>, seconds: number): Promise<boolean> {
     for (const [key, value] of Object.entries(values)) {
       await this.put(key, value, seconds);
     }
@@ -93,7 +93,7 @@ export class ArrayStore implements Store {
     return this.increment(key, -value);
   }
 
-  async forever(key: string, value: any): Promise<boolean> {
+  async forever<T = any>(key: string, value: T): Promise<boolean> {
     return this.put(key, value, 0);
   }
 

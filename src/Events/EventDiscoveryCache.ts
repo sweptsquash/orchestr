@@ -1,5 +1,5 @@
 import { Application } from '../Foundation/Application';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname } from 'path';
 
 /**
@@ -141,7 +141,9 @@ export class EventDiscoveryCache {
       // Validate cache version
       if (data.version !== EventDiscoveryCache.CACHE_VERSION) {
         if (this.app.isDebug()) {
-          console.warn(`Event cache version mismatch. Expected ${EventDiscoveryCache.CACHE_VERSION}, got ${data.version}`);
+          console.warn(
+            `Event cache version mismatch. Expected ${EventDiscoveryCache.CACHE_VERSION}, got ${data.version}`
+          );
         }
         return new Map();
       }
@@ -191,7 +193,7 @@ export class EventDiscoveryCache {
       const cache: EventCache = {
         version: EventDiscoveryCache.CACHE_VERSION,
         generatedAt: Date.now(),
-        events: {}
+        events: {},
       };
 
       const now = Date.now();
@@ -199,16 +201,12 @@ export class EventDiscoveryCache {
         cache.events[eventName] = {
           event: eventName,
           listeners: listenerList,
-          cachedAt: now
+          cachedAt: now,
         };
       }
 
       // Write cache file with pretty formatting for readability
-      writeFileSync(
-        cachePath,
-        JSON.stringify(cache, null, 2),
-        'utf-8'
-      );
+      writeFileSync(cachePath, JSON.stringify(cache, null, 2), 'utf-8');
 
       return true;
     } catch (error) {
@@ -241,8 +239,7 @@ export class EventDiscoveryCache {
         return true; // Already cleared
       }
 
-      const fs = require('fs');
-      fs.unlinkSync(cachePath);
+      unlinkSync(cachePath);
       return true;
     } catch (error) {
       if (this.app.isDebug()) {
@@ -267,7 +264,7 @@ export class EventDiscoveryCache {
    * console.log(`Total events: ${Object.keys(metadata.events).length}`)
    * ```
    */
-  getMetadata(): Pick<EventCache, 'version' | 'generatedAt'> & { eventCount: number } | null {
+  getMetadata(): (Pick<EventCache, 'version' | 'generatedAt'> & { eventCount: number }) | null {
     if (!this.exists()) {
       return null;
     }
@@ -280,7 +277,7 @@ export class EventDiscoveryCache {
       return {
         version: data.version,
         generatedAt: data.generatedAt,
-        eventCount: Object.keys(data.events).length
+        eventCount: Object.keys(data.events).length,
       };
     } catch (error) {
       if (this.app.isDebug()) {
@@ -366,7 +363,7 @@ export class EventDiscoveryCache {
         totalEvents,
         totalListeners,
         averageListenersPerEvent: totalEvents > 0 ? totalListeners / totalEvents : 0,
-        largestEvent
+        largestEvent,
       };
     } catch (error) {
       if (this.app.isDebug()) {

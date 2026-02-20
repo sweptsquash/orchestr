@@ -30,26 +30,24 @@ export class FileStore implements Store {
     this.cachePath = config.path || 'storage/framework/cache/data';
   }
 
-  async get(key: string): Promise<any> {
+  async get<T = any>(key: string): Promise<T | null> {
     return this.getPayload(key);
   }
 
-  async many(keys: string[]): Promise<Record<string, any>> {
-    const result: Record<string, any> = {};
+  async many<T = any>(keys: string[]): Promise<Record<string, T | null>> {
+    const result: Record<string, T | null> = {};
     for (const key of keys) {
       result[key] = await this.get(key);
     }
     return result;
   }
 
-  async put(key: string, value: any, seconds: number): Promise<boolean> {
+  async put<T = any>(key: string, value: T, seconds: number): Promise<boolean> {
     const filePath = this.path(key);
 
     await this.ensureDirectory(path.dirname(filePath));
 
-    const expiration = seconds > 0
-      ? this.currentTime() + seconds
-      : 9999999999; // ~2286, effectively forever
+    const expiration = seconds > 0 ? this.currentTime() + seconds : 9999999999; // ~2286, effectively forever
 
     const content = JSON.stringify({
       expiration,
@@ -64,7 +62,7 @@ export class FileStore implements Store {
     }
   }
 
-  async putMany(values: Record<string, any>, seconds: number): Promise<boolean> {
+  async putMany<T = any>(values: Record<string, T>, seconds: number): Promise<boolean> {
     let success = true;
     for (const [key, value] of Object.entries(values)) {
       if (!(await this.put(key, value, seconds))) {
@@ -85,7 +83,7 @@ export class FileStore implements Store {
     return this.increment(key, -value);
   }
 
-  async forever(key: string, value: any): Promise<boolean> {
+  async forever<T = any>(key: string, value: T): Promise<boolean> {
     return this.put(key, value, 0);
   }
 

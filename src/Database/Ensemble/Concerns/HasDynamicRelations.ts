@@ -303,7 +303,7 @@ export type MorphedByManyAccessor<
  * const user = await post.user;  // Type: User
  * const comments = await post.comments;  // Type: Comment[]
  */
-export function DynamicRelation(value: any, context?: any) {
+export function DynamicRelation(value: any, context?: any, ...rest: any[]) {
   // Modern decorator (TypeScript 5+ with context as second parameter)
   if (context && context.kind === 'method') {
     context.addInitializer(function (this: any) {
@@ -344,7 +344,7 @@ export function DynamicRelation(value: any, context?: any) {
   // Legacy decorator (target, propertyKey, descriptor)
   const target = value;
   const propertyKey = context;
-  const descriptor = arguments[2] as PropertyDescriptor;
+  const descriptor = rest[0] as PropertyDescriptor;
 
   if (descriptor && typeof descriptor === 'object' && 'value' in descriptor) {
     const originalMethod = descriptor.value;

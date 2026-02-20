@@ -26,8 +26,7 @@ export interface ListenerInterface<TEvent extends Event = Event> {
  *
  * @template TEvent - The event type this closure handles
  */
-export type ListenerClosure<TEvent extends Event = Event> =
-  (event: TEvent) => void | false | Promise<void | false>;
+export type ListenerClosure<TEvent extends Event = Event> = (event: TEvent) => void | false | Promise<void | false>;
 
 /**
  * Event Listener Type
@@ -39,10 +38,7 @@ export type ListenerClosure<TEvent extends Event = Event> =
  *
  * @template TEvent - The event type this listener handles
  */
-export type EventListener<TEvent extends Event = Event> =
-  | ListenerInterface<TEvent>
-  | ListenerClosure<TEvent>
-  | string;
+export type EventListener<TEvent extends Event = Event> = ListenerInterface<TEvent> | ListenerClosure<TEvent> | string;
 
 /**
  * Event Subscriber Interface
